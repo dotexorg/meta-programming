@@ -1,9 +1,3 @@
----
-title: "Specification: Telling the Agent What You Mean"
-description: "DO/DON'T/GLOSSARY, SDD, Intent Formalization, AGENTS.md — the minimum viable contract between developer and agent."
-sidebar_position: 3
----
-
 # Specification: Telling the Agent What You Mean
 
 Without a spec, an agent is just a raw prompt with better marketing. This page covers the minimum viable contract that makes an agent predictable — from three-line AGENTS.md files to full spec-driven development pipelines.

@@ -1,9 +1,3 @@
----
-title: "Verification"
-description: "Why agents can't review their own work"
-sidebar_position: 4
----
-
 # Verification
 
 An agent that builds a feature and then reviews it for correctness is the same agent — same context, same biases, same blind spots. Verification only works when the reviewer is structurally separated from the builder.

@@ -1,9 +1,3 @@
----
-title: "Pipeline"
-description: "Scout → Spec → Plan → Workers → Review → Lessons"
-sidebar_position: 4
----
-
 # Pipeline
 
 A structured workflow consistently outperforms throwing more context at a problem. This page details the six-stage pipeline, how orchestrators and workers divide responsibility, and the economic mechanics of forking versus spawning fresh agents.

@@ -1,9 +1,3 @@
----
-title: "Landscape"
-description: "Who else is doing this (April 2026)"
-sidebar_position: 4
----
-
 # Landscape
 
 The meta-programming space moved from experimental to mainstream between late 2025 and April 2026. This page maps the tools, studies, and people defining it right now.

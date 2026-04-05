@@ -1,9 +1,3 @@
----
-title: "Self-Improvement"
-description: "Agents that get better without fine-tuning"
-sidebar_position: 5
----
-
 # Self-Improvement
 
 Agents that improve through language — updating rules, extracting lessons, and pruning bad memories — without touching model weights. This is the operational core of meta-programming.

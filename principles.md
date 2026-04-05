@@ -1,9 +1,3 @@
----
-title: "Principles"
-description: "6 battle-tested principles for working with coding agents, and how to apply them at each maturity level"
-sidebar_position: 2
----
-
 # Principles
 
 Six principles that explain why some agent workflows succeed and others fail — each backed by experiments, and each actionable from day one.

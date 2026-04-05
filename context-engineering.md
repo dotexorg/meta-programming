@@ -1,9 +1,3 @@
----
-title: "Context Engineering"
-description: "Token budget, progressive disclosure, caching, MECW"
-sidebar_position: 4
----
-
 # Context Engineering
 
 The context window is the most constrained resource in agentic AI. Understanding how it degrades, how to fill it strategically, and how to keep it warm across sessions is what separates reliable pipelines from ones that quietly collapse under load.

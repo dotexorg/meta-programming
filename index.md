@@ -1,10 +1,16 @@
----
-title: "Meta-Programming"
-description: "What it is, why it matters, how we got here"
-sidebar_position: 1
----
-
 # Meta-Programming
+<!-- NAV
+- [Meta-Programming](index.md)
+- [Specification](specification.md)
+- [Context Engineering](context-engineering.md)
+- [Pipeline](pipeline.md)
+- [Verification](verification.md)
+- [Self-Improvement](self-improvement.md)
+- [Principles](principles.md)
+- [Landscape](landscape.md)
+-->
+
+
 
 The boundary between *describing* a system and *creating* one is disappearing. The main artifact of software engineering is no longer code — it's how you think.
 
