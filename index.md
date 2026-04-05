@@ -18,17 +18,8 @@ This is not a claim about AI replacing engineers. It's a claim about what engine
 
 ---
 
-**On This Page**
-- [Evolution: From Vibing to Meta-Programming](#evolution)
-- [The Thesis](#thesis)
-- [Three Layers](#three-layers)
-- [How This Was Built](#how-built)
-- [How to Read Evidence Levels](#evidence-levels)
-- [What's Inside](#whats-inside)
 
----
-
-## Evolution: From Vibing to Meta-Programming {#evolution}
+## Evolution: From Vibing to Meta-Programming
 
 The data landed before the theory. LinearB analyzed 8.1 million pull requests across 4,800 teams in 42 countries and found: 🟡 AI-generated code produces 1.7× more issues than human code, waits 4.6× longer for review, and gets accepted at 32.7% versus 84.4% for human PRs. Developers *feel* 20% faster; tasks take 19% longer end-to-end. This is the largest empirical study on developer productivity ever conducted, and it tells a clear story: the creation layer accelerated, the verification layer didn't.
 
@@ -44,7 +35,7 @@ This is the evolutionary pressure. It runs in three stages.
 
 ---
 
-## The Thesis {#thesis}
+## The Thesis
 
 Linguistic Meta-Programming (LMP) is self-improvement of a coding agent through linguistic feedback — specs, reviews, lessons, rules — without touching model weights.
 
@@ -60,7 +51,7 @@ AGENTS.md now has 60,000+ repositories and Linux Foundation endorsement. 🟡 Mi
 
 ---
 
-## Three Layers {#three-layers}
+## Three Layers
 
 LMP has structure. Three layers, each dependent on the one below.
 
@@ -98,7 +89,7 @@ The compounding mechanism is what distinguishes Layer 3 from simple iteration. E
 
 ---
 
-## How This Was Built {#how-built}
+## How This Was Built
 
 This documentation is built from 70+ research sessions and 6 controlled experiments — A/B tests, ablation studies, end-to-end pipeline runs. 🟢 The headline finding: structured process beat raw context injection on every measured dimension — cost ($6.63 vs $9.99), quality, and first-attempt pass rate.
 
@@ -106,7 +97,7 @@ External evidence — LinearB's 8.1M-PR dataset, Stanford's Meta-Harness results
 
 ---
 
-## How to Read Evidence Levels {#evidence-levels}
+## How to Read Evidence Levels
 
 Every major claim in this documentation carries an evidence marker:
 
@@ -120,7 +111,7 @@ Every major claim in this documentation carries an evidence marker:
 
 ---
 
-## What's Inside {#whats-inside}
+## What's Inside
 
 This documentation covers the full LMP framework, from first principles to production tooling.
 
