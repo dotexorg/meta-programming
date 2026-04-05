@@ -81,7 +81,7 @@ The system observes what worked, extracts lessons, refines the model, improves t
 
 Stanford's Meta-Harness study operationalized this at the harness level: automated harness optimization searching configurations the same way gradient descent searches weights. 🟡 The 6× performance gap between manual and optimized harnesses shows the scale of what's available in the language space, without any model change.
 
-Our end-to-end pipeline run validated the approach concretely. 🟢 Twenty-four files, 253 tests, zero regressions, approximately $5.50 in API cost — with structured process (Scout → Spec → Plan → Worker → Reviewer → Lessons) beating raw context injection on cost, quality, and first-attempt pass rate. The Lessons stage — where the reviewer agent extracts structured findings from the run — is what makes the next run cheaper and more accurate.
+A separate end-to-end pipeline run validated the approach concretely. 🟢 Twenty-four files, 253 tests, zero regressions, approximately $5.50 in API cost — with structured process (Scout → Spec → Plan → Worker → Reviewer → Lessons) beating raw context injection on cost, quality, and first-attempt pass rate. The Lessons stage — where the reviewer agent extracts structured findings from the run — is what makes the next run cheaper and more accurate.
 
 The compounding mechanism is what distinguishes Layer 3 from simple iteration. Each run narrows the gap between what you intend and what the agent produces. The knowledge base grows. The spec language tightens. Failure modes get documented before they recur. This is why LMP is a compounding return, not a one-time gain.
 
