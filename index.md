@@ -131,4 +131,3 @@ This documentation covers the full LMP framework, from first principles to produ
 
 ---
 
-*Built on the Pi coding agent framework. Not affiliated with Anthropic.*
