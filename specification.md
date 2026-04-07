@@ -30,7 +30,7 @@ A spec is a program. `DO`/`DO NOT` is a contract. The ticket *is* the prompt. Pr
 
 ## The Intent Formalization Spectrum
 
-Intent formalization is the central unsolved problem in AI-assisted development (Microsoft Research RiSE). 🟠 The challenge isn't writing specs — it's validating them. There's no oracle except the developer.
+Intent formalization is the central unsolved problem in AI-assisted development (Microsoft Research RiSE). 🟡 The challenge isn't writing specs — it's validating them. There's no oracle except the developer.
 
 The spectrum runs from informal to formal:
 
@@ -44,7 +44,7 @@ The spectrum runs from informal to formal:
 
 Auto-generated context actually hurts: it reduced task success by 3%, while human-written boundaries improved it by 4% (ETH Zurich, Feb 2026). 🟡 LLM-generated specs create overly obedient agents that do a lot of plausible-looking busywork. The spec has to come from a human who understands intent.
 
-Interactive test-driven formalization offers a middle path: the agent generates postconditions from natural language, then asks the developer to validate. "Remove duplicates" has at least two valid interpretations — the postcondition makes the agent commit to one before writing a line of code. 🟠
+Interactive test-driven formalization offers a middle path: the agent generates postconditions from natural language, then asks the developer to validate. "Remove duplicates" has at least two valid interpretations — the postcondition makes the agent commit to one before writing a line of code.
 
 ## SDD Tools
 
@@ -52,7 +52,7 @@ The ecosystem has consolidated around three positions on the spectrum.
 
 **[spec-kit](https://github.com/spec-kit/spec-kit)** (79K★) targets spec-anchored development. Its thesis: "The lingua franca of development moves to a higher level, and code is the last-mile approach." Five commands — `constitution → specify → plan → tasks → implement` — coordinate over 20 specialized agents. The spec persists after the task and drives future evolution.
 
-**[Kiro](https://kiro.dev)** (AWS) targets spec-first development. The workflow is Requirements → Design → Tasks. It ships separate spec types for features and bugfixes. Kiro's own documentation is direct about positioning: "Use Specs when building complex features. Use Vibe when doing quick exploratory coding." The internal mandate at Amazon — 80% weekly usage across 21K agents — was driven by a hard lesson: 4 Sev-1 incidents in 90 days. 🟠 Velocity without verification is not velocity.
+**[Kiro](https://kiro.dev)** (AWS) targets spec-first development. The workflow is Requirements → Design → Tasks. It ships separate spec types for features and bugfixes. Kiro's own documentation is direct about positioning: "Use Specs when building complex features. Use Vibe when doing quick exploratory coding." The internal mandate at Amazon — 80% weekly usage across 21K agents — was driven by a hard lesson: 4 Sev-1 incidents in 90 days. 🟡 Velocity without verification is not velocity.
 
 **[Tessl](https://tessl.io)** targets spec-as-source. The developer only edits the spec; code is a generated artifact. This is the most ambitious position and the hardest to retrofit onto existing codebases.
 
@@ -68,7 +68,7 @@ This is the network effect that makes AGENTS.md worth investing in: one spec, wr
 
 ## Constrained Natural Language
 
-Constrained natural language has a 60-year history in programming — COBOL, SQL, Simula all occupy the space between free-form prose and formal code. 🟠 LLMs may finally provide the compiler that makes it a first-class programming interface.
+Constrained natural language has a 60-year history in programming — COBOL, SQL, Simula all occupy the space between free-form prose and formal code. LLMs may finally provide the compiler that makes it a first-class programming interface.
 
 The practical consequence is that AGENTS.md files should be written in constrained natural language, not prose. The difference:
 
@@ -98,7 +98,7 @@ Agents running in non-interactive mode default to resolving ambiguity silently. 
 
 ## Fowler's Three Maturity Levels
 
-Teams mature through three levels — from disposable specs to spec-as-source. Fowler's model maps the progression: 🟠
+Teams mature through three levels — from disposable specs to spec-as-source. Fowler's model maps the progression: 🟡
 
 **Level 1 — Spec-first:** The spec is written before coding begins and used for the current task. Disposable after completion. This is the entry point. Even a 15-minute spec-writing session before handing off to an agent changes the failure rate.
 
