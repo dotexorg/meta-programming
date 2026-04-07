@@ -129,5 +129,4 @@ This documentation covers the full LMP framework, from first principles to produ
 
 **[Landscape](./landscape.md)** — Tools, projects, papers, and trends as of April 2026. Where the industry is and where it's going.
 
----
 
