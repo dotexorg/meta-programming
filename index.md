@@ -16,8 +16,6 @@ The boundary between *describing* a system and *creating* one is disappearing. T
 
 This is not a claim about AI replacing engineers. It's a claim about what engineering actually is when the cost of generating code approaches zero.
 
----
-
 
 ## Evolution: From Vibing to Meta-Programming
 
@@ -33,8 +31,6 @@ This is the evolutionary pressure. It runs in three stages.
 
 **Meta-programming** is what comes next. If the bottleneck is articulation — and the verification problem is structural — then the engineering artifact is language itself: the specs, rules, and pipelines that shape agent behavior. You're no longer writing programs. You're writing the instructions that write the programs, and teaching the system to improve those instructions from experience.
 
----
-
 ## The Thesis
 
 Linguistic Meta-Programming (LMP) is self-improvement of a coding agent through linguistic feedback — specs, reviews, lessons, rules — without touching model weights.
@@ -48,8 +44,6 @@ The practical consequence: **natural language is code.** A spec with a `DO NOT` 
 This convergence is measurable at scale. A Bamberg/Heidelberg systematic analysis of 2,926 repositories across Claude Code, GitHub Copilot, Cursor, Gemini, and Codex found independent convergence on the same pattern: 🟡 linguistic configuration files (CLAUDE.md, AGENTS.md, COPILOT-INSTRUCTIONS.md) as the primary mechanism for shaping agent behavior. Pydantic operationalized this most explicitly: they extracted 4,668 PR review comments and distilled them into approximately 150 AGENTS.md rules. ⚪ Implicit engineering judgment, compiled into explicit agent instructions.
 
 AGENTS.md now has 60,000+ repositories and Linux Foundation endorsement. 🟡 Microsoft Research RiSE named "Intent Formalization" a grand challenge for 2026. AWS launched Kiro. The industry is converging — language as the primary engineering artifact — without having named what it's converging on.
-
----
 
 ## Three Layers
 
