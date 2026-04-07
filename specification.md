@@ -60,9 +60,9 @@ These tools don't replace judgment — they enforce it. Spec review is cheaper t
 
 ## AGENTS.md as Industry Standard
 
-AGENTS.md is now present in 60,000+ public repositories. 🟠 The Linux Foundation has adopted it as the coordination protocol, with Anthropic, Google, Microsoft, and OpenAI as Platinum members. It works across Claude Code, Codex, Cursor, GitHub Copilot, Amp, Windsurf, and Devin — the spec travels with the repository, not with the tool.
+AGENTS.md is now present in 60,000+ public repositories. 🟡 The Linux Foundation has adopted it as the coordination protocol, with Anthropic, Google, Microsoft, and OpenAI as Platinum members. It works across Claude Code, Codex, Cursor, GitHub Copilot, Amp, Windsurf, and Devin — the spec travels with the repository, not with the tool.
 
-Implicit reviewer judgment can be systematically extracted and codified. Pydantic's team analyzed 4,668 pull request comments and distilled them into 150 explicit AGENTS.md rules. 🟠 Knowledge that lived in senior engineers' heads became a machine-readable contract. Every new contributor — human or agent — gets the same baseline.
+Implicit reviewer judgment can be systematically extracted and codified. Pydantic's team analyzed 4,668 pull request comments and distilled them into 150 explicit AGENTS.md rules. 🟡 Knowledge that lived in senior engineers' heads became a machine-readable contract. Every new contributor — human or agent — gets the same baseline.
 
 This is the network effect that makes AGENTS.md worth investing in: one spec, written once, applied everywhere the code goes.
 
