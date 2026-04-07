@@ -2,19 +2,6 @@
 
 Without a spec, an agent is just a raw prompt with better marketing. This page covers the minimum viable contract that makes an agent predictable — from three-line AGENTS.md files to full spec-driven development pipelines.
 
-## On This Page
-
-- [Why Boundaries Aren't Optional](#why-boundaries-arent-optional)
-- [The Minimum Viable Spec: DO / DO NOT / GLOSSARY](#the-minimum-viable-spec)
-- [The Intent Formalization Spectrum](#the-intent-formalization-spectrum)
-- [SDD Tools](#sdd-tools)
-- [AGENTS.md as Industry Standard](#agentsmd-as-industry-standard)
-- [Constrained Natural Language](#constrained-natural-language)
-- [What Actually Works in AGENTS.md](#what-actually-works-in-agentsmd)
-- [Fowler's Three Maturity Levels](#fowlers-three-maturity-levels)
-
----
-
 ## Why Boundaries Aren't Optional
 
 An agent without explicit scope boundaries fails in a specific, reproducible way: it does too much, in the wrong direction, with high confidence. 🟢
@@ -24,8 +11,6 @@ In controlled ablation testing, the same task submitted twice without a pipeline
 This aligns with what Microsoft Research calls the *intent gap*: the semantic distance between what a developer means and what a program actually does. The gap isn't a model capability problem. It's a specification problem. Every ambiguous instruction is an invitation for the agent to guess, and agents are optimistically wrong.
 
 [Principles](./principles.md) covers why Principle 2 (Boundaries Are Not Optional) sits at the foundation of everything else.
-
----
 
 ## The Minimum Viable Spec
 
@@ -41,13 +26,11 @@ This structure emerged directly from failure analysis. Prose instructions get sk
 
 Sizing matters too. Practical experience with BMAD-style quick-dev specs points to a 900–1600 token sweet spot per spec. 🟠 Below 900 tokens, ambiguity risk rises. Above 1600, context dilution sets in — the agent begins treating early constraints as background noise rather than active policy.
 
-The mental model that makes this click: a spec is a program. `DO`/`DO NOT` is a contract. The ticket *is* the prompt. Prompt engineering at the task level is operational policy design. 🟠
-
----
+A spec is a program. `DO`/`DO NOT` is a contract. The ticket *is* the prompt. Prompt engineering at the task level is operational policy design.
 
 ## The Intent Formalization Spectrum
 
-Microsoft Research RiSE identifies intent formalization as the central unsolved problem in AI-assisted development. 🟠 The challenge isn't writing specs — it's validating them. There's no oracle except the developer.
+Intent formalization is the central unsolved problem in AI-assisted development (Microsoft Research RiSE). 🟠 The challenge isn't writing specs — it's validating them. There's no oracle except the developer.
 
 The spectrum runs from informal to formal:
 
@@ -59,11 +42,9 @@ The spectrum runs from informal to formal:
 
 **DSL synthesis** is the far end. A domain-specific language designed so that correct code can be mechanically generated from a valid spec. Currently academic outside narrow domains, but the trajectory is clear.
 
-The practical insight from [ETH Zurich research (Feb 2026)](https://arxiv.org/abs/...) is that auto-generated context actually hurts: it reduced task success by 3%, while human-written boundaries improved it by 4%. 🟠 LLM-generated specs create overly obedient agents that do a lot of plausible-looking busywork. The spec has to come from a human who understands intent.
+Auto-generated context actually hurts: it reduced task success by 3%, while human-written boundaries improved it by 4% (ETH Zurich, Feb 2026). 🟡 LLM-generated specs create overly obedient agents that do a lot of plausible-looking busywork. The spec has to come from a human who understands intent.
 
 Interactive test-driven formalization offers a middle path: the agent generates postconditions from natural language, then asks the developer to validate. "Remove duplicates" has at least two valid interpretations — the postcondition makes the agent commit to one before writing a line of code. 🟠
-
----
 
 ## SDD Tools
 
@@ -77,21 +58,17 @@ The ecosystem has consolidated around three positions on the spectrum.
 
 These tools don't replace judgment — they enforce it. Spec review is cheaper than code review. In practice, spec review catches architecture problems before they compound: when an agent proposes a barrel re-export during spec review and you ask "what's that?", the agent can recognize it as an anti-pattern and remove it before a single file is touched. 🟢 That's a zero-cost correction. The same catch at PR review costs hours.
 
----
-
 ## AGENTS.md as Industry Standard
 
 AGENTS.md is now present in 60,000+ public repositories. 🟠 The Linux Foundation has adopted it as the coordination protocol, with Anthropic, Google, Microsoft, and OpenAI as Platinum members. It works across Claude Code, Codex, Cursor, GitHub Copilot, Amp, Windsurf, and Devin — the spec travels with the repository, not with the tool.
 
-Pydantic's adoption illustrates the scaling pattern. Their team analyzed 4,668 pull request comments, extracted implicit reviewer judgment, and distilled it into 150 explicit AGENTS.md rules. 🟠 Implicit knowledge that lived in senior engineers' heads became a machine-readable contract. Every new contributor — human or agent — gets the same baseline.
+Implicit reviewer judgment can be systematically extracted and codified. Pydantic's team analyzed 4,668 pull request comments and distilled them into 150 explicit AGENTS.md rules. 🟠 Knowledge that lived in senior engineers' heads became a machine-readable contract. Every new contributor — human or agent — gets the same baseline.
 
 This is the network effect that makes AGENTS.md worth investing in: one spec, written once, applied everywhere the code goes.
 
----
-
 ## Constrained Natural Language
 
-Volodymyr Pavlyshyn's framing cuts through a lot of noise: there's a 60-year history of constrained natural language in programming — COBOL, SQL, Simula all occupy the space between free-form prose and formal code. 🟠 LLMs may finally provide the compiler that makes constrained natural language a first-class programming interface.
+Constrained natural language has a 60-year history in programming — COBOL, SQL, Simula all occupy the space between free-form prose and formal code. 🟠 LLMs may finally provide the compiler that makes it a first-class programming interface.
 
 The practical consequence is that AGENTS.md files should be written in constrained natural language, not prose. The difference:
 
@@ -101,11 +78,9 @@ The practical consequence is that AGENTS.md files should be written in constrain
 
 Prose invites interpretation. Commands define behavior. An agent reading a command either executes it or violates it — there's no third state called "I think this probably means..." The constraint is the specification.
 
----
-
 ## What Actually Works in AGENTS.md
 
-Blake Crosley's patterns, validated across 10+ controlled runs per pattern, cut through the speculation. 🟡
+Controlled testing (10+ runs per pattern) shows what works in AGENTS.md: 🟡
 
 **What fails:**
 
@@ -119,13 +94,11 @@ Blake Crosley's patterns, validated across 10+ controlled runs per pattern, cut 
 - **Task-organized** — separate sections for coding, review, and release. An agent scoped to a coding task shouldn't have to parse release procedures to find its constraints.
 - **Closure-defined** — explicit done criteria. "Task is complete when: all tests pass, no TypeScript errors, PR description includes migration notes." Without a definition of done, agents optimize for looking finished rather than being finished.
 
-One finding from [ICLR 2026 AMBIG-SWE](https://arxiv.org/abs/...) reinforces this: agents running in non-interactive mode default to resolving ambiguity silently. Without an explicit instruction to surface ambiguity, task resolution rates drop from 48.8% to 28%. 🟠 "Ask when uncertain" needs to be a named instruction, not an assumed behavior.
-
----
+Agents running in non-interactive mode default to resolving ambiguity silently. Without an explicit instruction to surface ambiguity, task resolution rates drop from 48.8% to 28% (ICLR 2026, AMBIG-SWE). 🟡 "Ask when uncertain" needs to be a named instruction, not an assumed behavior.
 
 ## Fowler's Three Maturity Levels
 
-Martin Fowler's SDD maturity model gives teams a migration path rather than a cliff. 🟠
+Teams mature through three levels — from disposable specs to spec-as-source. Fowler's model maps the progression: 🟠
 
 **Level 1 — Spec-first:** The spec is written before coding begins and used for the current task. Disposable after completion. This is the entry point. Even a 15-minute spec-writing session before handing off to an agent changes the failure rate.
 
@@ -135,14 +108,10 @@ Martin Fowler's SDD maturity model gives teams a migration path rather than a cl
 
 The progression maps directly to how an engineer's role changes. Spec-first is still mostly prompt engineering. Spec-anchored shifts the primary skill toward system modeling and spec writing. Spec-as-source makes the developer a spec author, with code review replaced by property verification. The title changes from "prompt engineer" to "spec-driven architect." ⚪
 
----
-
 ## Open Questions
 
 - **Spec validation without an oracle.** Intent formalization works if developers validate generated postconditions — but most won't. What's the minimal validation loop that doesn't require developer discipline to work?
 - **Spec decay.** A spec written at project start drifts from implementation over time. What triggers a spec update? Who owns it?
 - **Cross-agent spec inheritance.** When Agent A spawns Agent B, how much of A's spec should B inherit? Currently implementation-defined by each orchestrator.
-
----
 
 *Next: [Pipeline](./pipeline.md) — how specs feed into execution. [Verification](./verification.md) — how spec violations surface at runtime. [Back to overview](./index.md).*
