@@ -38,13 +38,13 @@ Invalidation is by **git commit hash**. If the hash hasn't changed, the cached r
 
 The tradeoff: scout reports are summaries. An agent that gets a scout report instead of raw source is working from an abstraction. For most tasks this is fine — and faster. For tasks that need exact line-level access, workers can request specific files on demand from the scout report's index.
 
-The optimal approach is slicing: don't give every worker the full scout report. Pass only the sections relevant to their task. A full 60K-token report compresses to ~8K relevant tokens — a 4.5× saving without quality loss. 🟢
+The optimal approach is slicing: don't give every worker the full scout report. Pass only the sections relevant to their task. A full 60K-token report compresses to ~8K relevant tokens — a 4.5x saving without quality loss. 🟢
 
 [See Pipeline](./pipeline.md) for how scout output flows through the full orchestration model.
 
 ## Prompt Caching
 
-Prompt caching works on **prefix matching**: the system prompt, tools, and initial messages must be byte-identical to get a cache hit. A cache hit cuts time to first token by 13–31% and cost by 45–80% (PwC, *Don't Break the Cache*, 500+ agent sessions). 🟡
+Prompt caching works on **prefix matching**: the system prompt, tools, and initial messages must be byte-identical to get a cache hit. A cache hit cuts time to first token by 13-31% and cost by 45-80% (PwC, *Don't Break the Cache*, 500+ agent sessions). 🟡
 
 The practical rules:
 
@@ -73,15 +73,41 @@ The tradeoff is real: forking is cheaper but leaks context. A reviewer that fork
 
 [See Pipeline](./pipeline.md) for the full orchestration model.
 
+## Code Maps: The Exploration Paradox
+
+Code maps — ranked AST summaries built with tree-sitter, showing files, symbols, and call relationships in a fraction of the tokens a full read costs — are one of the most counterintuitive context tools. They make agents faster, cheaper, and **worse**.
+
+We tested this across 5 controlled runs of the same production task (EventBus refactor, 509 TS files, 53K lines, DDD architecture). Same codebase, same prompt, varied only codemap and pipeline. 🟢
+
+| Run | Setup | Cost | Read tokens | Architecture | Review |
+|-----|-------|------|-------------|-------------|--------|
+| #1 | Raw + codemap | $2.84 | R4.0M | ❌ Partial — only analytics | — |
+| #2 | Raw, no map | $8.45 | R13M | ⚠️ All 7 queues, wrong shape | — |
+| #3 | Codemap + clear spec | $9.17 | R14M | ⚠️ All 7 queues, wrong shape | — |
+| #4 | **Pipeline, no map** | **$6.63** | ~R10M | **✅ Correct** | **PASS** |
+| #5 | Pipeline + codemap | $9.99 | ~R16M | ✅ Correct | FAIL→fix |
+
+Three observations matter more than the numbers:
+
+**The map was loaded but ignored.** In run #3, the codemap extension was active and the AST map was injected into the system prompt. The agent never referenced it in reasoning — not once. The prompt already said "start with grep for QUEUE.send," and that navigational instruction overrode the map entirely. The map is useless when the prompt already contains search instructions. 🟢
+
+**The map chose the wrong location.** In run #1, the agent with a code map stuffed the EventBus into `manageDbConnection` middleware — because the map ranked it as a central file ("convenient, already has env access"). Without the map, the agent created a separate `createEventBus()` with `registerQueueHandlers()` in `index.ts` — architecturally correct. The map optimizes for *where to put code*, not *where code should go*. 🟢
+
+**More help = worse result, every time.** Codemap (#1 vs #2): cheaper but wrong. Clear spec (#3 vs #2): same result, $0.72 more. Codemap + pipeline (#5 vs #4): 51% more expensive, failed review. In all five runs, every form of "help" — map, detailed spec, map + process — made the result more expensive or worse. The best result came when the agent was forced to figure things out within a structured process. 🟢
+
+The mechanism is exploration vs exploitation. A code map gives the agent a fast path to the obvious answer. Without a map, the agent runs ~15 blind greps — expensive, but those greps cover the codebase broadly. Run #1 had 0 blind greps and missed 6 of 7 queues. Run #2 had ~15 blind greps and found all of them. The user's prompt even hinted at other queue types — the agent with a map ignored the hint because the map had already given it a "good enough" target.
+
+The practical rule: code maps help **orientation** (where are things? -> 3x cheaper, zero blind greps) but not **scope** (what needs to change?). Use maps for exploration tasks — "how does feature X work?" — where the agent doesn't know where to look. Avoid them for implementation tasks where the scope is defined in the spec. ETH Zurich arrived at the same conclusion independently: auto-generated context reduced success by 3%, human-written boundaries improved it by 4%. 🟡
+
+[See Principles](./principles.md) — Principle 3 (Exploration vs Exploitation) formalizes this tradeoff.
+
 ## Token Optimization
 
-Beyond caching, there are three levers for reducing token spend:
-
-**Code maps: useful but dangerous.** Tools like Aider's RepoMap use tree-sitter to build ranked AST maps — files, symbols, call relationships — in a fraction of the tokens a full read costs. But code maps can actively hurt: in our A/B test, the code-map run cost 51% more ($9.99 vs $6.63) and failed, while the pipeline without a map passed on the first attempt. 🟢 The mechanism: a map gives the agent a fast path that discourages exploration, leading it to miss scope it didn't know it needed. Use maps for navigation-heavy tasks where the target is known; avoid them for open-ended implementation.
+Beyond caching and code maps, two levers reduce token spend:
 
 **Exclusion patterns.** Analogous to `.gitignore`, tools like `.claudeignore` exclude paths from context assembly. Build artifacts, `node_modules`, generated files, test fixtures with large datasets — none of these belong in the context window. A well-maintained exclusion list cuts effective token cost per task substantially. 🟡
 
-**Finite Brain Model.** Every knowledge resource declares its token cost upfront. Before a context rebuild, a budget dashboard shows what's being loaded and what it costs. Graceful degradation: if a resource would push the budget over threshold, it loads at reduced fidelity — full body → outline → catalog listing. 🟡 This keeps context assembly predictable rather than letting it balloon silently.
+**Finite Brain Model.** Every knowledge resource declares its token cost upfront. Before a context rebuild, a budget dashboard shows what's being loaded and what it costs. Graceful degradation: if a resource would push the budget over threshold, it loads at reduced fidelity — full body, then outline, then catalog listing. 🟡 This keeps context assembly predictable rather than letting it balloon silently.
 
 [See Specification](./specification.md) — specs themselves are a form of context compression. A good spec loads a task's full intent in ~2K tokens rather than spreading it across a conversation.
 
