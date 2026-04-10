@@ -19,7 +19,7 @@ The pipeline maps cleanly onto a research-to-delivery arc:
 
 **Scout** — a lightweight agent (Haiku-class) reads the codebase, identifies relevant files, and produces a focused briefing. It never writes anything. Its job is to compress signal so downstream stages don't pay full-context prices for orientation.
 
-**Spec** — a structured specification is written before any implementation begins. In one tech-lead run, a clarifying question during spec review revealed the feature being designed was already configured in the system — the agent asked "should I check if webhook routing already exists?" and it did. The entire workstream was cancelled before a line of code was written. 🟢 [See Specification](./specification.md) for how specs are structured.
+**Spec** — a structured specification is written before any implementation begins. In one tech-lead run, a clarifying question during spec review revealed the feature being designed was already configured in the system — the agent asked "why implement this if Transmart is already configured for all 11 languages?" The entire workstream was cancelled before a line of code was written. In an earlier attempt on the same task, a raw agent simply followed the request and implemented the translations from scratch — duplicating what already existed 🟢. [See Specification](./specification.md) for how specs are structured.
 
 **Plan** — the spec is decomposed into atomic, sequenced tasks with explicit acceptance criteria. Task ordering matters: dependencies are made explicit so workers don't block each other and so parallelism opportunities are visible upfront.
 
