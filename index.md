@@ -1,4 +1,5 @@
 # Meta-Programming
+
 <!-- NAV
 - [Meta-Programming](index.md)
 - [Specification](specification.md)
@@ -10,16 +11,15 @@
 - [Landscape](landscape.md)
 -->
 
-
-
-The boundary between *describing* a system and *creating* one is disappearing. The main artifact of software engineering is no longer code — it's how you think.
+The boundary between _describing_ a system and _creating_ one is disappearing. The main artifact of software engineering is no longer code — it's how you think.
 
 This is not a claim about AI replacing engineers. It's a claim about what engineering actually is when the cost of generating code approaches zero.
 
+<img alt="image" src="hero.png" />
 
 ## Evolution: From Vibing to Meta-Programming
 
-The data landed before the theory. LinearB analyzed 8.1 million pull requests across 4,800 teams in 42 countries and found: 🟡 AI-generated code produces 1.7× more issues than human code, waits 4.6× longer for review, and gets accepted at 32.7% versus 84.4% for human PRs. Developers *feel* 20% faster; tasks take 19% longer end-to-end. This is the largest empirical study on developer productivity ever conducted, and it tells a clear story: the creation layer accelerated, the verification layer didn't.
+The data landed before the theory. LinearB analyzed 8.1 million pull requests across 4,800 teams in 42 countries and found: 🟡 AI-generated code produces 1.7× more issues than human code, waits 4.6× longer for review, and gets accepted at 32.7% versus 84.4% for human PRs. Developers _feel_ 20% faster; tasks take 19% longer end-to-end. This is the largest empirical study on developer productivity ever conducted, and it tells a clear story: the creation layer accelerated, the verification layer didn't.
 
 The harness gap compounds the issue. Stanford's 2026 Meta-Harness study showed that changing the harness around a fixed LLM can produce a **6× performance gap on the same benchmark**. 🟡 Automated harness optimization outperformed expert hand-designed harnesses and surpassed the Claude Code baseline on TerminalBench-2 — without changing a single model weight. Particula confirmed this directionally on SWE-bench: the same model scored 42% with a stock scaffold and 78% after scaffold reconstruction. 🟡 Six frontier models within 0.8 points of each other. "If you're still chasing model upgrades, you're optimizing the wrong variable."
 
@@ -27,7 +27,7 @@ This is the evolutionary pressure. It runs in three stages.
 
 **Vibe coding** is intent without understanding. You describe what you want, the agent produces something that looks right, you ship it. Fast, often wrong, occasionally catastrophic. This is where most teams discovered the LinearB pattern firsthand: creation accelerated, verification didn't scale with it. The gap between "AI wrote it" and "AI wrote it correctly" isn't closing on its own.
 
-**Agentic engineering** is the correction. Agents make decisions — they call tools, branch on results, orchestrate other agents, run for hours. The engineer's job shifts from writing code to designing the system that writes code: the pipeline, the verification gates, the handoffs. Microsoft's 10-month Copilot study across 878 pull requests confirmed the architectural shift: 🟡 *"the bottleneck moved from typing speed to knowledge, judgment, and ability to articulate tasks."* That's not a productivity finding — it's a description of a new job.
+**Agentic engineering** is the correction. Agents make decisions — they call tools, branch on results, orchestrate other agents, run for hours. The engineer's job shifts from writing code to designing the system that writes code: the pipeline, the verification gates, the handoffs. Microsoft's 10-month Copilot study across 878 pull requests confirmed the architectural shift: 🟡 _"the bottleneck moved from typing speed to knowledge, judgment, and ability to articulate tasks."_ That's not a productivity finding — it's a description of a new job.
 
 **Meta-programming** is what comes next. If the bottleneck is articulation — and the verification problem is structural — then the engineering artifact is language itself: the specs, rules, and pipelines that shape agent behavior. You're no longer writing programs. You're writing the instructions that write the programs, and teaching the system to improve those instructions from experience.
 
@@ -35,7 +35,7 @@ This is the evolutionary pressure. It runs in three stages.
 
 Linguistic Meta-Programming (LMP) is self-improvement of a coding agent through linguistic feedback — specs, reviews, lessons, rules — without touching model weights.
 
-The academic framing arrived independently. Tsinghua's March 2026 NLAH paper (Natural-Language Agent Harnesses) built systems where harness behavior is externalized as "a portable executable artifact in editable natural language." 🟡 Their opening diagnosis: *"Agent performance increasingly depends on harness engineering, yet harness design is usually buried in controller code."* Making it explicit and linguistic — not hard-coded — is the intervention. That's precisely what LMP is.
+The academic framing arrived independently. Tsinghua's March 2026 NLAH paper (Natural-Language Agent Harnesses) built systems where harness behavior is externalized as "a portable executable artifact in editable natural language." 🟡 Their opening diagnosis: _"Agent performance increasingly depends on harness engineering, yet harness design is usually buried in controller code."_ Making it explicit and linguistic — not hard-coded — is the intervention. That's precisely what LMP is.
 
 DSPy (Stanford) arrived at the same structure from the optimization side: treat prompts as **learnable parameters** rather than hand-written strings. 🟡 BootstrapFewShot and MIPROv2 search the language space automatically. The underlying claim is identical — language is the parameter space, and it can be engineered.
 
@@ -53,7 +53,7 @@ LMP has structure. Three layers, each dependent on the one below.
 
 Not documentation. Not memory. An epistemology — the agent's working model of what it knows, how it knows it, where it fails, and what constraints it operates under. This is what separates a generic model from a system shaped by a specific engineer's context.
 
-The performance difference is real. The ERL paper (Allard et al., March 2026) showed that agents operating with heuristics extracted from prior trajectories outperformed ReAct baselines by **+7.8%** on standard benchmarks. 🟡 Their finding: *"Heuristics provide more transferable abstractions than few-shot prompting."* Persistent structured knowledge outperforms in-context examples — the format matters.
+The performance difference is real. The ERL paper (Allard et al., March 2026) showed that agents operating with heuristics extracted from prior trajectories outperformed ReAct baselines by **+7.8%** on standard benchmarks. 🟡 Their finding: _"Heuristics provide more transferable abstractions than few-shot prompting."_ Persistent structured knowledge outperforms in-context examples — the format matters.
 
 We measured this directly. In a controlled A/B test, the same architectural problem ran through a generic Claude Sonnet instance and through an agent with a structured knowledge base. 🟢 The generic agent asked for a code map. The agent with the KB flagged the exploration-versus-exploitation paradox — with evidence from prior sessions — before writing a line of code. The difference isn't code quality. It's the level of reasoning the agent brings to the problem before touching implementation.
 
@@ -95,13 +95,13 @@ External evidence — LinearB's 8.1M-PR dataset, Stanford's Meta-Harness results
 
 Every major claim in this documentation carries an evidence marker:
 
-| Marker | Meaning |
-|--------|---------|
-| 🟢 **Proven** | Our experiment, our data, measured result |
-| 🟡 **Trusted source** | Anthropic, Microsoft Research, peer-reviewed — we read the primary source |
-| 🟠 **Community reports** | Widely observed, not independently verified by us |
-| 🔴 **Unverified** | Heard, not checked |
-| ⚪ **Opinion** | Our synthesis — reasoned, not proven |
+| Marker                   | Meaning                                                                   |
+| ------------------------ | ------------------------------------------------------------------------- |
+| 🟢 **Proven**            | Our experiment, our data, measured result                                 |
+| 🟡 **Trusted source**    | Anthropic, Microsoft Research, peer-reviewed — we read the primary source |
+| 🟠 **Community reports** | Widely observed, not independently verified by us                         |
+| 🔴 **Unverified**        | Heard, not checked                                                        |
+| ⚪ **Opinion**           | Our synthesis — reasoned, not proven                                      |
 
 ---
 
@@ -122,5 +122,3 @@ This documentation covers the full LMP framework, from first principles to produ
 **[Principles](./principles.md)** — Six principles, three application levels, anti-patterns. The opinionated foundation everything else builds on.
 
 **[Landscape](./landscape.md)** — Tools, projects, papers, and trends as of April 2026. Where the industry is and where it's going.
-
-
