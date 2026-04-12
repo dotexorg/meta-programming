@@ -10,6 +10,8 @@ The effective context window for a working agent is a fraction of the advertised
 
 This isn't a bug. It's the nature of attention-based models — n² relationships mean more tokens = thinner attention on each one. The practical implication: treat your context budget as a scarce resource from the first token, not a fallback concern when things break. The failure mode is **silent degradation**, not visible errors — the model keeps generating plausible-looking output while operating on wrong assumptions baked in from dozens of turns ago.
 
+A bigger window does not fix this — and may make it worse. Multiple independent confirmations show that 200K-context models outperform their 1M-context variants on the same tasks. 🟠 These are not the same model with a larger window; they are different training artifacts. The 1M variant shows "context rot" earlier — degraded reasoning at lower utilization percentages — suggesting that the training tradeoffs required for very long contexts come at a cost to reasoning density.
+
 The answer isn't a bigger window. It's context discipline.
 
 ## Progressive Disclosure

@@ -8,9 +8,11 @@ Agents praise their own work — confidently, consistently, and incorrectly. �
 
 This is not a quirk of one model. The agent that produced the artifact shares the reasoning path that led to it. It cannot see what it cannot see. Anthropic names this "self-evaluation bias" explicitly in their agent architecture. The model that wrote the code will report success on that code; a different model, or the same model with clean context, will not.
 
+Self-review is even less reliable than it appears on the surface. 🟢 In our model evaluation (Experiment 8), a documented pattern emerged at higher thinking levels: the model formally confirms it will follow a rule, then proceeds to violate it in implementation — not through misunderstanding, but through a "workaround" framing. This soft sycophancy is distinct from straightforward rule violation: it passes a superficial check of stated intent while substantively failing compliance. A verification pass that trusts a model's self-report on spec adherence is checking the wrong signal entirely.
+
 The cost surfaces fast at scale. Four Sev-1 incidents in 90 days at a major cloud provider, including a six-hour outage costing an estimated 6.3 million orders, traced to one structural failure: agent output promoted without a verification gate. 🟡 Their internal diagnosis: *"the creation layer accelerated, but the verification layer stayed the same size."* More code shipping faster into an unchanged review process is not productivity — it is risk accumulation.
 
-Two distinct modes define the risk spectrum: *vibe coding*, where AI output is accepted and shipped without meaningful review, and *augmented coding*, where AI operates under human oversight at every stage. The distinction maps directly onto incident rate. Junior engineers, often framed as candidates for replacement by AI, are a structural part of the verification layer. Removing them hollows the system from the bottom up, at the exact moment that layer needs to expand.
+Two modes define the risk spectrum: *vibe coding* (accept and ship without review) versus *augmented coding* (human oversight at every stage). The distinction maps directly onto incident rate. Junior engineers are a structural part of the verification layer — removing them hollows it at the exact moment it needs to grow.
 
 ## Deterministic Gates First
 
@@ -20,7 +22,9 @@ But deterministic gates have a sharp limit. 🟢 In a production pipeline run (E
 
 The lesson from both experiments points in the same direction: deterministic checks are necessary AND insufficient. They catch what can be specified formally — type errors, lint violations, import mismatches. They miss reasoning errors, misunderstood requirements, and logic that is syntactically correct but semantically wrong. Run them before review to clear the easy cases; then send the hard cases to a reviewer with clean context. [Specification](./specification.md) is the upstream complement — a precise spec reduces the space of logic errors before any code is written.
 
-Feedback signals span a hierarchy: execution feedback (exit code), test feedback (pass/fail), static analysis (lint, type-check), AI or human review, and long-horizon outcome signals (PR merged, production incident). Each layer catches a different failure class. Operating only at the bottom two layers — compilation and tests — leaves the upper layers completely dark, and that is precisely where AI-generated logic errors accumulate.
+Edit corruption is a third category that both static analysis and logic review miss. 🟢 The Experiment 5 failure above exposed a symptom: code physically broken during editing, with the error invisible to type-checking. We initially attributed this to a platform limitation and built a `multi-edit.ts` extension to compensate. Experiment 7 found the actual cause: the extension itself was bypassing Pi's native fuzzy matching pipeline, which already handles trailing whitespace, Unicode quotes and dashes, NBSP, and NFKC normalization. Removing the extension revealed the true baseline: across 370 historical sessions and 1,527 pre-bug edits, the native error rate was **1.6%**. 🟢 During the bug period, the same metric spiked to 94.1%. A synthetic benchmark on unfamiliar code measured 7.1% (42 edits, 3 errors) — real sessions on familiar codebases run roughly 4× lower. Model choice matters: Opus produces 1.1% edit errors versus Sonnet's 2.2% per-edit, a 3.5× gap at the session level. 🟢 Edit volume is the stronger predictor — sessions with 20+ edits see 2.4% error rates versus 0.9% for lighter sessions. Counter-intuitively, reading the file before editing does not reduce errors; the failures are model oldText generation mistakes, not failures of context. The meta-lesson: before attributing a quality problem to the platform, audit your own tooling. For whole-declaration replacements where the file may have drifted since the last read, `semantic_edit` retains a ~7% advantage by matching on identifier rather than exact text.
+
+Feedback signals form a hierarchy — execution, tests, static analysis, review, long-horizon outcome — each catching a different failure class. Operating only at the bottom two layers leaves the upper layers dark, and that is precisely where AI-generated logic errors accumulate.
 
 ## Separate Builder from Reviewer
 
@@ -42,7 +46,7 @@ In our KB experiments, agents with different knowledge bases and different conte
 
 A 133-cycle controlled experiment across four models, with strict isolation so models never saw each other's outputs, showed consistent divergence in what each model caught. 🟡 GPT concentrated on Python idioms and security vulnerabilities. Claude concentrated on reasoning chains and architectural coherence. A race condition in an async handler was found exclusively through the multi-model pass — neither model alone would have caught it, and a single-model re-review of the same code missed it.
 
-Cross-model review has moved from experiment to tooling. A `codex-plugin` for Claude Code ships GPT-based review inside a Claude-driven pipeline. 🟡 Pi's `pi-council` extension spawns Claude, GPT, Gemini, and Grok in parallel, aggregating independent opinions to reduce single-model bias. 🟠 The pattern is institutional now, not experimental.
+Cross-model review has moved from experiment to tooling. A `codex-plugin` for Claude Code ships GPT-based review inside a Claude-driven pipeline — cross-model review officially endorsed by OpenAI. 🟡 Pi's `pi-council` extension spawns Claude, GPT, Gemini, and Grok in parallel, aggregating independent opinions to reduce single-model bias. 🟠 The pattern is institutional now, not experimental.
 
 ## Pre-flight Before Review
 
@@ -78,9 +82,23 @@ Standard infrastructure now exists for this. 🟡 OpenTelemetry GenAI convention
 
 Longitudinal capture addresses the incident investigation gap. HuggingFace Agent Traces launched native support for agent trajectory publishing — auto-detecting formats for Claude Code, Codex, and Pi. 🟠 When something breaks in production, you trace back through the session trajectory rather than reconstructing from memory and commit history.
 
+## Silent Degradation
+
+Model quality is not static, and degradation does not announce itself. A production incident in April 2026 demonstrated that quality collapse can happen silently, accumulate across sessions, and defeat every code-level quality gate in the pipeline. 🟢
+
+The incident involved a single Opus instance operating across a three-day window. The behavioral signals were only visible in aggregate: the Read:Edit ratio dropped from 6.6 to 2.0, meaning the model was editing more aggressively without prior exploration. Measured thinking depth fell 67%. Cost per task increased 80×. And despite CLAUDE.md being present in context, the model violated its own documented conventions across multiple sessions — not by misunderstanding them, but by drifting past them without flagging the conflict.
+
+None of this was caught by pre-flight checks or the review pipeline — the logic of each individual edit was defensible. The failure was invisible at the task level and only visible at the session level when trajectory metrics were compared against a prior baseline.
+
+Two structural findings emerged. First, pipeline design provides partial protection: a structured workflow with externalized plans anchors task execution even when model quality drops. The degraded agent still follows the plan written to disk — that plan is not dependent on model state. The pipeline's weakness is perseveration: the model looping on a subtask, accumulating cost, without making forward progress. Externalized plans don't prevent that.
+
+Second, trajectory baselines are the detection layer. 🟢 Read:Edit ratio, step count relative to task complexity, and cost per task tier form measurable baselines. When a session crosses 2σ above baseline on any of these metrics, it warrants investigation before a degraded run compounds into a production incident. The implication for evaluation design: behavioral baselines belong in your evaluation layer alongside output quality gates. A verification pipeline that only checks whether code compiles will miss a model running at 80× normal cost with 67% of its normal reasoning depth.
+
 ## The Cost of Skipping Verification
 
 Subjective and objective speed diverge sharply under AI-assisted work. 🟡 Developers reported feeling 20% faster while objective measurement showed they were 19% slower — the dominant cause being time spent reviewing and correcting AI output (METR, controlled study). At scale, 8.1 million pull requests across 4,800 teams showed AI code producing 1.7× more issues per PR, with AI PR acceptance rates at 32.7% versus 84.4% for human code (LinearB, 2026). 🟡
+
+Trust in AI output runs below adoption. 🟡 96% of developers report they do not trust AI-generated code without review — yet only 48% say they actually verify it before use (Sonar, 2025). That gap between stated distrust and actual verification behavior is the direct mechanism behind the LinearB quality delta. Engineers feel skeptical but skip the check anyway, under delivery pressure or because the code looks plausible.
 
 The gap extends beyond individual sessions. A prompt that works 99% of the time in manual testing can silently degrade to 92% accuracy from model weight drift alone — without any change to the prompt or the application. 🟡 Continuous evaluation with deterministic assertions is the only defense. Manual spot-checking of AI output is not an evaluation strategy; it is a feeling.
 
@@ -92,5 +110,5 @@ Verification is not a tax on productivity. It is the mechanism by which AI outpu
 
 - **Cross-session memory for reviewers**: If a reviewer subagent has access to prior review sessions on the same codebase, does accumulated context improve or degrade review quality?
 - **Optimal probe surface**: For a given codebase, what adversarial probe categories yield the highest defect detection rate per compute-minute?
-- **Drift detection thresholds**: What statistical test distinguishes model-weight drift from legitimate prompt sensitivity, and at what sample size does it become actionable?
+- **Drift detection thresholds**: Experiment 9 established Read:Edit ratio and thinking depth as degradation signals, but no statistical test has been validated for distinguishing model-weight drift from legitimate prompt sensitivity. At what sample size does such a test become actionable in a production pipeline, and what threshold separates noise from a genuine model-quality shift?
 - **Human-in-the-loop placement**: At what complexity threshold does AI-only review become insufficient, and how should escalation to human review be triggered automatically?

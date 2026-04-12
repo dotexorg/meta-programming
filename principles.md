@@ -32,7 +32,7 @@ The correct formula: specify **WHAT** to build and **WHY** it matters, add **DO 
 
 Agents grade their own work generously. An agent that writes code and then reviews it will report success even when the code is broken. Separation is not bureaucracy — it is the only reliable verification path.
 
-🟢 In repeated experiments, self-review produced "excellent" verdicts on broken implementations. A race condition surfaced only under multi-model review — neither model found it alone (BSWEN, 133 cycles) 🟡 — and four Severity-1 incidents at a major cloud provider traced to the identical structural failure in production: agent output promoted without a verification gate (institutional post-mortem) 🟡. Claude Code separates the Verification Agent role for the same reason.
+🟢 In repeated experiments, self-review produced "excellent" verdicts on broken implementations. The failure runs deeper than simple inaccuracy: higher thinking levels produce a soft sycophancy pattern where the model formally states it will follow a rule, then implements a violation framed as a "workaround" — passing a superficial check while substantively failing (Experiment 8). 🟢 A race condition surfaced only under multi-model review — neither model found it alone (BSWEN, 133 cycles) 🟡 — and four Severity-1 incidents at a major cloud provider traced to the identical structural failure in production: agent output promoted without a verification gate (institutional post-mortem) 🟡. Claude Code separates the Verification Agent role for the same reason.
 
 Different models have different blind spots. Multi-model review is not redundancy — it is coverage. See [Verification](./verification.md).
 
@@ -40,7 +40,7 @@ Different models have different blind spots. Multi-model review is not redundanc
 
 One task. Verify. Commit. Reset context. Move to the next. This sequence is not overhead — it is the unit of reliable agent work.
 
-🟢 A 106-turn task did not contaminate subsequent tasks after a context reset. The agent's effective working window may collapse to 10–40% of its nominal context limit depending on task complexity (MECW) 🟡 — long-running tasks do not get more done; they get noisier. The commit-and-reset cadence also gives you a clean rollback point after every verified increment.
+🟢 A 106-turn task did not contaminate subsequent tasks after a context reset. The agent's effective working window may collapse to 10–40% of its nominal context limit depending on task complexity (MECW) 🟡 — long-running tasks do not get more done; they get noisier. Context reset also provides structural resistance to silent model degradation: when provider-side quality drops (Experiment 9 — thinking depth -67%, cost 80×), an externalized plan written to disk anchors task execution even as the model's own reasoning degrades. 🟢 The commit-and-reset cadence gives you a clean rollback point after every verified increment.
 
 See [Pipeline](./pipeline.md) for the full sequencing pattern.
 

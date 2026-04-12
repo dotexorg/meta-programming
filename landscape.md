@@ -4,15 +4,17 @@ The meta-programming space moved from experimental to mainstream between late 20
 
 ## Trends: April 2026
 
-Four shifts define the current moment.
+Five shifts define the current moment.
 
 **SDD went mainstream.** Specification-Driven Development moved from a niche practice to an expected workflow in roughly six months. spec-kit hit 79K stars, Kiro launched with an 80% internal mandate, and Tessl entered the space — all treating the spec as the primary artifact and code as last-mile output. [See Specification](./specification.md) for tool depth.
 
 **Agent-first design became the IDE default.** Cursor 3 (Apr 2, 2026) is the clearest signal: a complete rebuild around parallel agents rather than a chat sidebar bolted onto an editor. The interface assumption shifted from "one conversation" to "fleet coordination."
 
-**Self-improving agents went mainstream.** Three independent projects shipped autonomous self-improvement loops in a single week. An autoresearch loop ran 70+ experiments and raised a chess engine from expert to grandmaster rank #311 🟢. The pattern is no longer research-only.
+**Self-improving agents went mainstream.** Three independent projects shipped autonomous self-improvement loops in a single week. An autoresearch loop ran 70+ experiments and raised a chess engine from expert to grandmaster rank #311 🟢. Production deployments validate the pattern at scale: Cursor's code review agent (Apr 2026) self-improves from live PR activity, reaching a 78% issue resolution rate 🟠; QodoAI applies the same loop — review data feeds directly into better agent skills 🟠. The feedback mechanism is no longer research-only.
 
 **Token optimization emerged as a discipline.** Semantic editing (read by symbol, edit by function name) and semantic diff (Relace, 4,300+ tok/s, ~40% token reduction 🟠) are now first-class concerns alongside prompt quality. Complex reasoning may collapse at 10–40% of the advertised context window 🟡 — that constraint is what these tools are built to solve.
+
+**Knowledge-as-files became a design principle.** LLMs can accumulate experience into durable knowledge bases — plain markdown files, version-controlled, readable by both humans and agents. The idea crossed into mainstream awareness in early 2026 🟠, drawing 55K engagements and 19.4M views on a single articulation. The logic: a file outlasts any app built to contain it; the distributable artifact is the prompt or spec, not the runtime. This is the same principle underlying AGENTS.md, CLAUDE.md, and every SDD scaffold that treats specifications as primary artifacts.
 
 Two structural moves matter in the background: OpenAI acquired Astral (uv/ruff), Anthropic acquired Bun. Both companies are racing to own the toolchain layer around coding agents. MCP has become the de facto integration standard — 50+ official servers, described as "USB-C of AI tool integration" 🟠.
 
@@ -29,6 +31,8 @@ The unit of work is shifting from a single LLM call to coordinated agent session
 The most-cited failure case study of early 2026 demonstrates what happens when generation velocity outpaces verification 🟡. Four Sev-1 incidents in 90 days, a 6-hour outage with 6.3 million lost orders, and a restructuring whose internal diagnosis was "the creation layer accelerated, the verification layer stayed the same." The full post-mortem and observability lessons are in [Verification](./verification.md).
 
 The lesson is not that agent coding fails. It's that generation velocity without a proportional investment in verification creates systemic fragility.
+
+Large-scale empirical data confirms the pattern. AI-assisted PRs generate 1.7× more issues per review, face 4.6× longer wait times, and reach only 32.7% acceptance versus 84.4% for human-written code (LinearB, 8.1M PRs) 🟡. Meanwhile, 96% of developers report not trusting AI-generated code — but only 48% consistently verify it before shipping (Sonar) 🟡. The gap between skepticism and verification practice is where fragility concentrates.
 
 ## Coding Agents: The Big Three (and the Rest)
 
@@ -82,7 +86,7 @@ The broader pattern: features Anthropic ships — extended thinking, extended co
 
 ## Academic Work
 
-Five research threads with direct practitioner relevance.
+Seven research threads with direct practitioner relevance.
 
 The bottleneck in AI-assisted software engineering moved from generation to intent formalization — the gap between what a developer means and what a specification captures (Microsoft RiSE, 878 PRs over 10 months) 🟡. Closing the intent gap upstream is cheaper than debugging it downstream. This is the theoretical foundation behind SDD.
 
@@ -94,13 +98,17 @@ An experience loop — gather episodes → extract reusable patterns → apply t
 
 Complex agent reasoning degrades well before the context limit — at 10–40% utilization depending on task type (MECW) 🟡. Context curation — semantic chunking, relevance filtering, symbol-level reads — is not optional harness polish. It's load-bearing.
 
+Harness choice is not neutral — a 6× performance gap separates optimized from baseline configurations on identical tasks (Stanford) 🟡. Which tools, which orchestration patterns, which prompting strategy — these decisions compound across runs and teams. The harness is not scaffolding; it is architecture.
+
+The natural language layer of a harness can itself be treated as a portable executable artifact — editable, version-controlled, deployable without code changes (Tsinghua NLAH) 🟡. This is the formal basis for what practitioners implement as AGENTS.md, SKILL.md, and CLAUDE.md: executable specifications the agent reads and applies at runtime.
+
 ## People to Follow
 
 The most thorough public practitioner writing on agent system design is a 12-chapter *Agentic Engineering Patterns* guide (@simonw, Django co-creator) 🟠 — the best single reference for production harness decisions. When something new ships, this is usually the first rigorous take.
 
 Pi internals, subagent architecture, and the `createBranchedSession` fork-context pattern are documented most authoritatively at the source — Pi's creator (@badlogicgames, libgdx) publishes implementation details that aren't available elsewhere 🟠.
 
-The autoresearch pattern — autonomous experiment loops that improve a metric without human intervention — was popularized by @karpathy (GPT-2 training optimization, 700 commits, -11% validation loss 🟢). A separate autoresearch run achieved chess ELO from expert to grandmaster rank #311 across 70+ experiments 🟢. The pattern is now implemented as a Pi extension (pi-autoresearch, 2,288★).
+The autoresearch pattern — autonomous experiment loops that improve a metric without human intervention — was popularized by @karpathy (GPT-2 training optimization, 700 commits, -11% validation loss 🟢). A separate autoresearch run achieved chess ELO from expert to grandmaster rank #311 across 70+ experiments 🟢. The pattern is now implemented as a Pi extension (pi-autoresearch, 2,288★). The same author's broader thesis — that LLMs enable building personal knowledge bases from accumulated experience, with durable files as the primary artifact — reached mainstream traction 🟠 (55K likes, 19.4M views on a single articulation; the 'Idea Files' corollary drew another 25.7K). The distributable unit is the prompt, not the app that runs it.
 
 The insight that "learning at the harness layer produces compounding returns" comes from the LangChain ecosystem (@hwchase17, LangChain founder) 🟠 — worth tracking for early signals on where orchestration patterns are converging.
 

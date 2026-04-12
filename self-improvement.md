@@ -50,6 +50,8 @@ L3 is the critical layer. The derivability test asks: *can this fact be derived 
 
 We operate at L1 today, with our KB serving as a manual L3. The gap between these levels — L2 path-scoped rules, automated L3 extraction, L4 session memory, L5 consolidation — is the implementation roadmap. [See Pipeline](./pipeline.md) for how worker isolation maps to context reset at each level.
 
+Two always-loaded files — not five levels — can be enough to close the most expensive gap. 🟢 After forgetting the same workflow five times in a single session, we reduced the architecture to `persona.md` (~1KB, rewritten each wrap by the current model) and `rules.md` (~500 tokens, manually edited, never touched by automation). The session journal was eliminated: platform-native JSONL session history already captures what the journal duplicated. Each `/wrap` rewrites `persona.md` from scratch — ~15 bullets, medium detail, current decisions and next steps — while `rules.md` holds sticky workflow conventions and key paths that shouldn't drift session to session. Mapped to the CC hierarchy: `rules.md` ≈ L1 (stable behavioral constraints), `persona.md` ≈ L3 (session-derived facts), platform session files ≈ L4. The design rule: automate only the levels where imprecision is recoverable.
+
 ## Extraction ≠ Promotion
 
 Not every observed fact deserves permanent storage. Promotion thresholds should scale with storage permanence.
@@ -90,6 +92,10 @@ Three patterns emerge from real-world deployments — including our own:
 
 **Four-file memory split.** Separating lessons, errors, decisions, and todos by file prevents category pollution and enables targeted drift detection. 🟡 After each edit, a drift-detection pass checks for content inconsistent with the current state. Over 100 sessions on a production Java codebase: by session 20 the agent knows your patterns; by session 50, the codebase better than fresh context. Errors are never repeated.
 
+**Self-patching skills.** Skills can rewrite their own failing steps from recorded failure data, without a human editing them. 🟡 The `/evolve` command in Claude Recall analyzes which steps produced errors across past sessions and rewrites those steps in-place. This closes a gap in the CC `skillImprovement.ts` pattern: the post-sampling hook only fires when a skill is currently active. Retrospective `/evolve` runs against any skill with a failure history, regardless of when it last ran.
+
+**Debugging-loop RAG.** Persistent memory wired into the debugging loop — not just planning — compounds quality as the codebase ages. 🟡 One production deployment captures each resolved bug as a retrieval entry: the next time a similar failure appears, the relevant fix surfaces automatically. No manual curation step; the debugging history is the training set.
+
 ## Self-Improving Tools
 
 Three tools implement self-improvement as a first-class concern:
@@ -112,9 +118,12 @@ Individual episodes carry an effectiveness score updated on each use: +0.3 on su
 
 Episodic reflections can accumulate into a higher-order policy layer. Meta-Policy Reflexion builds predicate-style rules with confidence weights. 🟡 Two enforcement modes: SOFT biases token probabilities toward rule-consistent actions; HARD blocks actions that violate active rules outright. Hard blocking outperforms soft-only enforcement — preventing rule violations that soft biasing merely discourages.
 
+Production deployments show the pattern works at scale with simple stacks. Output quality saturates at roughly seven governed memories per entity — adding more provides no measurable benefit. 🟡 This ceiling emerged from multi-agent research (Personize.ai, 2026): 99.6% fact recall, 50% token reduction from progressive delivery, zero cross-entity leakage on 500 adversarial queries. A separate deployment across 232 tasks with zero failures used four components: an extraction daemon polling logs, Haiku extracting facts, a markdown vault with vector search, and an injection hook surfacing the top-2 relevant entries per prompt. 🟡 The complexity ceiling is low — returns come from the feedback loop, not the infrastructure.
+
 ## Open Questions
 
 - **Extraction timing:** end-of-session batch vs. inline after each tool call. Inline catches more signal but adds latency to every step.
 - **Rule conflict resolution:** when two promoted rules contradict each other, which wins? Current implementations use recency; confidence weighting is unexplored in practice.
 - **Cross-agent sharing:** rules extracted by one agent instance — are they transferable to another agent on the same codebase? No published evidence yet.
 - **Extraction under adversarial input:** a user who deliberately provides incorrect corrections could poison the skill file. No defense mechanism exists in current implementations.
+- **KB scaling:** At ~935 bullets, retrieval quality is partially addressed. A search v2 implementation — threshold-based filtering, relevance scoring, and a top-15 cap — reduced broad-query noise from 214 results to 5 actionable hits. 🟢 Narrow queries now work reliably; the tier files and progressive disclosure handle broad exploration. The remaining gap is cross-bullet linking: related findings stored under different tags don't surface together unless the query happens to match both. At the current scale this is manageable; at 1,500+ bullets it will require graph-based retrieval or explicit cross-references.

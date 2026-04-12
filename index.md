@@ -41,7 +41,7 @@ The practical consequence: **natural language is code.** A spec with a `DO NOT` 
 
 This convergence is measurable at scale. A Bamberg/Heidelberg systematic analysis of 2,926 repositories across Claude Code, GitHub Copilot, Cursor, Gemini, and Codex found independent convergence on the same pattern: 🟡 linguistic configuration files (CLAUDE.md, AGENTS.md, COPILOT-INSTRUCTIONS.md) as the primary mechanism for shaping agent behavior. Pydantic operationalized this most explicitly: they extracted 4,668 PR review comments and distilled them into approximately 150 AGENTS.md rules. ⚪ Implicit engineering judgment, compiled into explicit agent instructions.
 
-AGENTS.md now has 60,000+ repositories and Linux Foundation endorsement. 🟡 Microsoft Research RiSE named "Intent Formalization" a grand challenge for 2026. AWS launched Kiro. The industry is converging — language as the primary engineering artifact — without having named what it's converging on.
+AGENTS.md now has 60,000+ repositories and Linux Foundation endorsement. 🟡 Microsoft Research RiSE named "Intent Formalization" a grand challenge for 2026. AWS launched Kiro. A code review agent in production (April 2026) self-improves from pull request activity in real time, closing the loop that Layer 3 describes. 🟠 The industry is converging — language as the primary engineering artifact — without having named what it's converging on.
 
 ## Three Layers
 
@@ -53,7 +53,7 @@ Not documentation. Not memory. An epistemology — the agent's working model of 
 
 The performance difference is real. The ERL paper (Allard et al., March 2026) showed that agents operating with heuristics extracted from prior trajectories outperformed ReAct baselines by **+7.8%** on standard benchmarks. 🟡 Their finding: _"Heuristics provide more transferable abstractions than few-shot prompting."_ Persistent structured knowledge outperforms in-context examples — the format matters.
 
-We measured this directly. In a controlled A/B test, the same architectural problem ran through a generic Claude Sonnet instance and through an agent with a structured knowledge base. 🟢 The generic agent asked for a code map. The agent with the KB flagged the exploration-versus-exploitation paradox — with evidence from prior sessions — before writing a line of code. The difference isn't code quality. It's the level of reasoning the agent brings to the problem before touching implementation.
+We measured this directly. In a controlled A/B test, the same architectural problem ran through a generic Claude Sonnet instance and through an agent with a structured knowledge base. 🟢 The generic agent asked for a code map. The agent with the KB flagged the exploration-versus-exploitation paradox — with evidence from prior sessions — before writing a line of code. The difference isn't code quality. It's the level of reasoning the agent brings to the problem before touching implementation. The broader practitioner community confirmed the pattern independently — Karpathy's framing of personal KB-building via LLMs (55K engagements, early 2026) named the same mechanism: the KB is the primary artifact, not the code it produces. 🟠
 
 Layer 1 explains why all production agent systems converge on human-readable markdown: AGENTS.md, CLAUDE.md, SKILL.md, DECISIONS.md, MEMORY.md. Markdown is version-controlled, readable by humans, parseable by agents, portable across model versions. 🟡 Anthropic's own approach — "Building Agents with Skills" — organizes persistent behavioral configuration as composable markdown files rather than model fine-tunes. Not a coincidence. It's the natural format for a shared epistemology.
 
@@ -83,7 +83,9 @@ The compounding mechanism is what distinguishes Layer 3 from simple iteration. E
 
 ## How This Was Built
 
-This documentation is built from 70+ research sessions and 6 controlled experiments — A/B tests, ablation studies, end-to-end pipeline runs. 🟢 The headline finding: structured process beat raw context injection on every measured dimension — cost ($6.63 vs $9.99), quality, and first-attempt pass rate.
+This documentation is built from 70+ research sessions and 9 controlled experiments — A/B tests, ablation studies, end-to-end pipeline runs. 🟢 The headline finding: structured process beat raw context injection on every measured dimension — cost ($6.63 vs $9.99), quality, and first-attempt pass rate.
+
+The three most recent experiments extended the picture. An edit tool investigation traced a persistent error pattern to our own extension, not the platform — the post-fix benchmark settled at 7.1% errors, all model mistakes, all self-recovering in one retry. 🟢 A model evaluation found that thinking level acts as a compliance-to-conviction dial: higher thinking produces conviction (holding position under pushback) rather than compliance, with a distinct soft sycophancy mode — saying no while providing the implementation anyway — identified as a new failure category not caught by standard benchmarks. 🟢 A documented degradation incident (April 2026 Opus) confirmed that the structured pipeline resists provider-side quality shifts by design: when model reasoning degrades, the externalized plan compensates. 🟢
 
 External evidence — LinearB's 8.1M-PR dataset, Stanford's Meta-Harness results, Tsinghua's NLAH paper, the Bamberg/Heidelberg repository analysis — arrived independently and confirmed the same structural conclusions. Every major claim carries an explicit evidence marker. Where a claim rests on our experiments, you'll see 🟢. Where it rests on a primary source we've read, you'll see 🟡. When it's our synthesis without direct proof, it's marked ⚪.
 
