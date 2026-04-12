@@ -12,7 +12,7 @@ Four shifts define the current moment.
 
 **Self-improving agents went mainstream.** Three independent projects shipped autonomous self-improvement loops in a single week. An autoresearch loop ran 70+ experiments and raised a chess engine from expert to grandmaster rank #311 🟢. The pattern is no longer research-only.
 
-**Token optimization emerged as a discipline.** Semantic editing (read by symbol, edit by function name) and semantic diff (Relace, 4,300+ tok/s, ~40% token reduction 🟠) are now first-class concerns alongside prompt quality. Models effectively use 1–2% of their advertised context window 🟡 — that constraint is what these tools are built to solve.
+**Token optimization emerged as a discipline.** Semantic editing (read by symbol, edit by function name) and semantic diff (Relace, 4,300+ tok/s, ~40% token reduction 🟠) are now first-class concerns alongside prompt quality. Complex reasoning may collapse at 10–40% of the advertised context window 🟡 — that constraint is what these tools are built to solve.
 
 Two structural moves matter in the background: OpenAI acquired Astral (uv/ruff), Anthropic acquired Bun. Both companies are racing to own the toolchain layer around coding agents. MCP has become the de facto integration standard — 50+ official servers, described as "USB-C of AI tool integration" 🟠.
 
@@ -29,6 +29,20 @@ The unit of work is shifting from a single LLM call to coordinated agent session
 The most-cited failure case study of early 2026 demonstrates what happens when generation velocity outpaces verification 🟡. Four Sev-1 incidents in 90 days, a 6-hour outage with 6.3 million lost orders, and a restructuring whose internal diagnosis was "the creation layer accelerated, the verification layer stayed the same." The full post-mortem and observability lessons are in [Verification](./verification.md).
 
 The lesson is not that agent coding fails. It's that generation velocity without a proportional investment in verification creates systemic fragility.
+
+## Coding Agents: The Big Three (and the Rest)
+
+Three terminal-based coding agents dominate serious development work as of April 2026.
+
+**Claude Code** (Anthropic) is the most deeply documented production agent architecture. 18 chapters of technical analysis cover its 5-level memory system, 14-step tool pipeline, fork-based cache sharing, coordinator mode (R→S→I→V), and 30 lifecycle hooks. It hit $1B ARR faster than any previous AI tool. 67% win rate over Codex CLI in blind quality tests (80.9% on SWE-bench-style eval). 🟡 Our research uses it as the reference architecture — not because it’s the only option, but because it’s the only one whose internals are fully documented.
+
+**Codex CLI** (OpenAI, 68K★, MIT) is the open-source alternative. Sandbox-first architecture (read-only/workspace-write/full-access modes), thread pooling, and native OTLP tracing. The `codex-plugin` for Claude Code enables cross-model review — build with Claude, review with GPT. 🟡
+
+**Pi** (Mario Zechner / @badlogicgames, libgdx creator) is the extensible multi-provider agent. Unlike Claude Code (Anthropic-only) and Codex (OpenAI-only), Pi runs Claude, GPT, Gemini, Grok, and local models through one interface. The extension ecosystem (pi-subagents 636★, pi-autoresearch 2,288★, pi-council, pi-codemap) makes it the most customizable harness available. Our entire pipeline — tech-lead skill, research extension, semantic edit — runs on Pi. CDP (Context Driven Prompting) philosophy: minimal system prompt, context from files, extensions for everything else.
+
+**OpenHands** (formerly OpenDevin, All Hands AI) is the leading open-source autonomous agent platform — browser-based, sandboxed, with a web UI for non-terminal workflows. **OpenClaw** was the most-starred agent dashboard project before Anthropic absorbed most of its functionality natively (Agent Teams, Channels, Plugin Marketplace, Persistent Memory) in early 2026. 🟠 Platform features consistently absorb community tools — building on model-agnostic patterns reduces this risk.
+
+Other notable agents: **Cursor 3** (see below), **Amp** (Sourcegraph), **Devin** (Cognition), **Windsurf** (Codeium). The field consolidates fast — six months ago this list would have been three times longer.
 
 ## Key Tools
 
@@ -78,7 +92,7 @@ Formal contracts for agent behavior — analogous to design-by-contract for func
 
 An experience loop — gather episodes → extract reusable patterns → apply to new tasks — can be formalized and automated (ExpeL) 🟠. The architecture maps directly onto how self-improving harnesses should accumulate knowledge. [See Self-Improvement](./self-improvement.md).
 
-Models effectively use 1–2% of their advertised context window (MECW) 🟡. Context curation — semantic chunking, relevance filtering, symbol-level reads — is not optional harness polish. It's load-bearing.
+Complex agent reasoning degrades well before the context limit — at 10–40% utilization depending on task type (MECW) 🟡. Context curation — semantic chunking, relevance filtering, symbol-level reads — is not optional harness polish. It's load-bearing.
 
 ## People to Follow
 
@@ -86,7 +100,7 @@ The most thorough public practitioner writing on agent system design is a 12-cha
 
 Pi internals, subagent architecture, and the `createBranchedSession` fork-context pattern are documented most authoritatively at the source — Pi's creator (@badlogicgames, libgdx) publishes implementation details that aren't available elsewhere 🟠.
 
-The chess ELO benchmark and autoresearch loop (expert → grandmaster #311, 70+ experiments 🟢) come from a practitioner (@karpathy) whose public writing on autonomous experimentation remains the clearest existence proof that self-improving systems work at scale today.
+The autoresearch pattern — autonomous experiment loops that improve a metric without human intervention — was popularized by @karpathy (GPT-2 training optimization, 700 commits, -11% validation loss 🟢). A separate autoresearch run achieved chess ELO from expert to grandmaster rank #311 across 70+ experiments 🟢. The pattern is now implemented as a Pi extension (pi-autoresearch, 2,288★).
 
 The insight that "learning at the harness layer produces compounding returns" comes from the LangChain ecosystem (@hwchase17, LangChain founder) 🟠 — worth tracking for early signals on where orchestration patterns are converging.
 
@@ -95,6 +109,6 @@ The insight that "learning at the harness layer produces compounding returns" co
 - Does the METR slowdown effect persist after teams adopt SDD workflows, or is it a symptom of spec-less generation?
 - At what agent fleet size does consensus checking across multiple models become faster than single-model iteration?
 - Will AGENTS.md formalization under Linux Foundation produce a stable v1 spec, or fragment into tool-specific dialects?
-- How does effective context utilization (1–2% MECW) interact with very long agent trajectories — does it degrade further?
+- How does effective context utilization (MECW at 10–40%) interact with very long agent trajectories — does it degrade further?
 
 *[← Index](./index.md) · [Specification →](./specification.md) · [Verification →](./verification.md) · [Self-Improvement →](./self-improvement.md)*

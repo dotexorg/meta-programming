@@ -4,7 +4,7 @@ An agent that builds a feature and then reviews it for correctness is the same a
 
 ## The Self-Review Problem
 
-Agents praise their own work — confidently, consistently, and incorrectly. 🟢 In repeated experiments, we asked implementation agents to evaluate their own output. The verdict was always positive, even when the code contained logic errors, dead files, and broken runtime behavior. The pattern is not occasional — it is the default.
+Agents praise their own work — confidently, consistently, and incorrectly. 🟢 Across Experiments 3 and 5, we asked implementation agents to evaluate their own output. The verdict was always positive, even when the code contained logic errors, dead files, and broken runtime behavior. The pattern is not occasional — it is the default.
 
 This is not a quirk of one model. The agent that produced the artifact shares the reasoning path that led to it. It cannot see what it cannot see. Anthropic names this "self-evaluation bias" explicitly in their agent architecture. The model that wrote the code will report success on that code; a different model, or the same model with clean context, will not.
 
@@ -14,19 +14,21 @@ Two distinct modes define the risk spectrum: *vibe coding*, where AI output is a
 
 ## Deterministic Gates First
 
-The cheapest verification is automated. Run `tsc`, run your test suite, run your linter. These gates catch a large class of errors in milliseconds, with zero hallucination risk. They should be the first stage of every pipeline — not a replacement for review, but a prerequisite for it. [See Pipeline](./pipeline.md) for how this fits as a stage.
+The cheapest verification is automated. Run your type-checker, run your test suite, run your linter — whatever deterministic tools your stack provides. These gates catch a large class of errors in milliseconds, with zero hallucination risk. They should be the first stage of every pipeline — not a replacement for review, but a prerequisite for it. [See Pipeline](./pipeline.md) for how this fits as a stage.
 
-But deterministic gates have a sharp limit. 🟢 In a production pipeline run (Experiment 5), an agent editing an authentication service broke `JIRA_SERVICE_USER` through an incorrect `||` operator split. TypeScript compilation passed. All tests passed. The error was a runtime logic error — invisible to static analysis — caught only by a separate reviewer agent. In a different pipeline run (Experiment 3), review agents had a 0% first-attempt pass rate across three iterations — and both failure types (missing imports, duplicate exports from wildcard re-exports) were deterministically checkable errors that `tsc` and a simple grep would have caught before any LLM review token was spent. 🟢
+But deterministic gates have a sharp limit. 🟢 In a production pipeline run (Experiment 5), an agent editing an authentication service broke `JIRA_SERVICE_USER` through an incorrect `||` operator split. The type-checker passed. All tests passed. The error was a runtime logic error — invisible to static analysis — caught only by a separate reviewer agent. In a different pipeline run (Experiment 3), review agents had a 0% first-attempt pass rate across three iterations — and both failure types (missing imports, duplicate exports from wildcard re-exports) were deterministically checkable errors that a type-check and a simple grep would have caught before any LLM review token was spent. 🟢
 
 The lesson from both experiments points in the same direction: deterministic checks are necessary AND insufficient. They catch what can be specified formally — type errors, lint violations, import mismatches. They miss reasoning errors, misunderstood requirements, and logic that is syntactically correct but semantically wrong. Run them before review to clear the easy cases; then send the hard cases to a reviewer with clean context. [Specification](./specification.md) is the upstream complement — a precise spec reduces the space of logic errors before any code is written.
 
-Feedback signals span a hierarchy: execution feedback (exit code), test feedback (pass/fail), static analysis (lint/tsc), AI or human review, and long-horizon outcome signals (PR merged, production incident). Each layer catches a different failure class. Operating only at the bottom two layers — compilation and tests — leaves the upper layers completely dark, and that is precisely where AI-generated logic errors accumulate.
+Feedback signals span a hierarchy: execution feedback (exit code), test feedback (pass/fail), static analysis (lint, type-check), AI or human review, and long-horizon outcome signals (PR merged, production incident). Each layer catches a different failure class. Operating only at the bottom two layers — compilation and tests — leaves the upper layers completely dark, and that is precisely where AI-generated logic errors accumulate.
 
 ## Separate Builder from Reviewer
 
-Builder and reviewer must not share context. 🟢 We discovered this through failure, not theory. In our pipeline, an implementation worker produced code that looked correct — and when asked to self-evaluate, reported success. A separate reviewer agent, starting from a clean session with only the spec and the diff, immediately found three bugs: a duplicate JSDoc comment, a dead file, and a broken `JIRA_SERVICE_USER` across three `runAgent()` calls where the worker had dropped a string prefix during editing. The worker understood the task correctly but broke the code physically — and could not see the breakage because it shared the same reasoning path that caused it.
+Builder and reviewer must not share context. 🟢 In our pipeline, an implementation worker produced code that passed type-checking and reported success when asked to self-evaluate. A separate reviewer agent, starting from a clean session with only the spec and the diff, immediately found three bugs: a dead file that should have been deleted, a duplicate comment block, and a string constant silently corrupted during editing — the worker had split a multi-part expression across lines and dropped a prefix, producing code that compiled but would fail at runtime. The worker understood the task correctly but introduced the breakage through the edit operation itself. It could not see the problem because it shared the same reasoning path that caused it — the assumption "I just edited this, so it must be right" was baked into its context.
 
 The structural fix is simple: different session, different model, different instructions — any of these breaks the shared-blind-spot problem. [Principle 4](./principles.md) encodes this as a hard architectural requirement, not a preference.
+
+Separate review is not a guarantee. In our own pipeline runs, the reviewer occasionally missed issues that a human caught later — particularly when the bug was in the *intent* of the spec rather than the *implementation* of the code. A reviewer with clean context sees what the worker broke, but it still trusts the spec it was given. If the spec itself is wrong, the reviewer validates incorrect behavior as correct. This is why spec review (upstream) and code review (downstream) are complementary, not substitutes.
 
 The BMAD Adversarial Review pattern makes structural isolation operational: the reviewer receives an explicit adversarial mandate. The instruction is not "review this code" but *"you MUST find issues — zero findings triggers a halt."* This eliminates the default toward approval. ⚪ The reviewer evaluates the artifact, not the intent behind it; it has no access to the author's reasoning, only to the output.
 
@@ -40,21 +42,23 @@ In our KB experiments, agents with different knowledge bases and different conte
 
 A 133-cycle controlled experiment across four models, with strict isolation so models never saw each other's outputs, showed consistent divergence in what each model caught. 🟡 GPT concentrated on Python idioms and security vulnerabilities. Claude concentrated on reasoning chains and architectural coherence. A race condition in an async handler was found exclusively through the multi-model pass — neither model alone would have caught it, and a single-model re-review of the same code missed it.
 
-Cross-model review has moved from experiment to tooling. A `codex-plugin` for Claude Code ships GPT-based review inside a Claude-driven pipeline. 🟠 Pi's `pi-council` extension spawns Claude, GPT, Gemini, and Grok in parallel, aggregating independent opinions to reduce single-model bias. 🟠 The pattern is institutional now, not experimental.
+Cross-model review has moved from experiment to tooling. A `codex-plugin` for Claude Code ships GPT-based review inside a Claude-driven pipeline. 🟡 Pi's `pi-council` extension spawns Claude, GPT, Gemini, and Grok in parallel, aggregating independent opinions to reduce single-model bias. 🟠 The pattern is institutional now, not experimental.
 
 ## Pre-flight Before Review
 
-Review agents are expensive. Sending them code that fails `tsc` or has obvious import errors wastes tokens on problems a shell command solves in milliseconds.
+Review agents are expensive. Sending them code that fails type-checking or has obvious import errors wastes tokens on problems a shell command solves in milliseconds.
 
-We learned this the expensive way. 🟢 In Experiment 3, a full pipeline run across 24 files required three review iterations before passing — costing roughly $1.50 in reviewer + fixer cycles. Both failure types (missing import updates, duplicate exports from wildcard re-exports) would have been caught by `tsc --noEmit` and a targeted grep. After that run, pre-flight checks became a permanent pipeline stage: type-check, lint, and pattern-match for known error categories run before any review token is spent.
+We learned this through waste, not cost. 🟢 In Experiment 3, a full pipeline run across 24 files required three review iterations before passing. Both failure types (missing import updates, duplicate exports from wildcard re-exports) would have been caught by a type-check pass and a targeted grep. After that run, pre-flight checks became a permanent pipeline stage: type-check, lint, and pattern-match for known error categories run before any review token is spent.
 
 The pre-flight checklist is project-specific, but the pattern is universal:
-- `tsc --noEmit` (or equivalent type-check)
+- Type-check (`tsc --noEmit` for TypeScript, `mypy` for Python, `cargo check` for Rust — whatever your stack has)
 - Linter pass (no new violations)
-- Grep for known anti-patterns (orphaned operators, duplicate exports, `console.log` in production paths)
+- Grep for known anti-patterns (orphaned operators, duplicate exports, debug statements in production paths)
 - Test suite (existing tests still pass)
 
 Pre-flight does not replace review. It clears the mechanical failures so the reviewer can focus on logic, architecture, and spec compliance — the things only a reasoning agent can evaluate.
+
+Not every task needs the full stack. A one-file bug fix can ship with just pre-flight checks and a human glance. A multi-file refactor across domain boundaries needs pre-flight, a separate reviewer agent, and possibly multi-model review. The verification depth should match the blast radius of the change — over-verifying trivial fixes wastes tokens, under-verifying architectural changes wastes production stability.
 
 ## Adversarial Probes
 

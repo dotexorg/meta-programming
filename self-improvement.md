@@ -32,19 +32,19 @@ Agent → action → tests
     IF score < threshold → demote or delete
 ```
 
-The verification signals — test results, linter output, user corrections — are what make extraction possible. Without reliable feedback, the agent extracts from noise. [See Verification](./verification.md) for why feedback infrastructure determines the self-improvement ceiling.
+The verification signals — test results, linter output, user corrections — are what make extraction possible. Without reliable feedback, the agent extracts from noise. And even with reliable feedback, extraction can go wrong: a lesson that was correct for one context may be overfitted to that specific task. If the lesson "always use barrel re-exports" is extracted from a case where barrels happened to work, it becomes a landmine in a project where barrels cause circular dependencies. Demotion scoring (see Memory Scoring below) is the defense — lessons that hurt on application lose score and eventually get pruned. [See Verification](./verification.md) for why feedback infrastructure determines the self-improvement ceiling.
 
 ## Memory Hierarchy
 
-Five levels of persistent context exist, each with a different scope and promotion threshold. 🟢
+Five levels of persistent context exist, each with a different scope and promotion threshold. 🟢 The table below uses Claude Code's implementation as the reference — it is the most fully documented production agent architecture — but the pattern generalizes. Any agent with file-based rules, scoped overrides, cross-session extraction, within-session notes, and periodic consolidation follows the same hierarchy, regardless of what the files are called.
 
-| Level | Mechanism | Scope |
+| Level | What it does | Example (Claude Code) |
 |---|---|---|
-| L1 | `CLAUDE.md` — always loaded | Static rules, project-wide |
-| L2 | `.claude/rules/` — path-scoped | Directory or feature area |
-| L3 | `extractMemories` — cross-session facts | 4 types, derivability-filtered |
-| L4 | Session notes — 9 structured sections | Current session only |
-| L5 | `autoDream` consolidation | Triggers at 24h + 5 sessions |
+| L1 | Static rules, always loaded | `CLAUDE.md` (or `AGENTS.md`, project config) |
+| L2 | Path-scoped overrides | `.claude/rules/` with glob patterns |
+| L3 | Cross-session facts, derivability-filtered | `extractMemories` — 4 types |
+| L4 | Within-session structured notes | Session Memory — 9 sections |
+| L5 | Periodic consolidation and pruning | `autoDream` — triggers at 24h + 5 sessions |
 
 L3 is the critical layer. The derivability test asks: *can this fact be derived from the codebase itself?* If yes, it doesn't need to be remembered — it can be re-derived on demand. Only facts that require experience (preferences, patterns, past decisions) pass through. L5 consolidation prevents memory bloat: older session notes are merged and compressed before they accumulate into noise.
 
@@ -62,9 +62,9 @@ Learned heuristics outperform few-shot prompting once the agent has accumulated 
 
 The practical principle: use cheap extraction liberally within sessions, use strong extraction conservatively across sessions. Demote as aggressively as you promote — memories that fail on application should lose score. [See Principles](./principles.md) for Principle 6 on this tradeoff.
 
-## Skill Improvement via Post-Sampling Hooks
+## Automatic Rule Updates from User Corrections
 
-Behavioral rules can be updated automatically from user corrections, with no external infrastructure required. 🟢 The `skillImprovement` hook runs after every five messages and checks whether the user corrected the agent's behavior during that window. If corrections are found, it rewrites `SKILL.md` to reflect what the agent should have done.
+Behavioral rules can be updated automatically from user corrections, with no external infrastructure required. 🟢 In Claude Code, a background hook runs after every five messages and checks whether the user corrected the agent's behavior during that window. If corrections are found, it rewrites the skill file to reflect what the agent should have done. The mechanism is platform-specific; the principle — observe corrections, update rules, apply next time — is universal.
 
 This is a minimal closed loop: behavior → correction → rule update → next invocation uses updated rule. The limitation is that it only captures explicit user corrections — silent failures pass through unnoticed. Pair it with a verification stage that surfaces failures the user didn't explicitly flag [see Verification](./verification.md).
 
@@ -94,7 +94,7 @@ Three patterns emerge from real-world deployments — including our own:
 
 Three tools implement self-improvement as a first-class concern:
 
-**skill-loop:** An MCP server that runs a four-stage loop against any skill file — observe → inspect → amend → evaluate. 🟠 The MCP interface means the loop can be triggered programmatically, not just by end-of-session hooks.
+**skill-loop:** A tool that runs a four-stage loop against any skill file — observe → inspect → amend → evaluate. 🟠 It exposes the loop as a programmatic interface (via MCP, the emerging standard for tool integration), so improvement can be triggered automatically, not just by end-of-session hooks.
 
 **Stanford Meta-Harness** automates the harness itself, not just the agent. Rather than manually tuning the evaluation loop, it treats harness configuration as an optimization target. 🟡 A 6x performance gap between optimized and unoptimized harnesses on the same agent confirms that self-improvement infrastructure matters as much as the agent itself.
 
