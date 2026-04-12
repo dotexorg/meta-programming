@@ -15,8 +15,6 @@ The boundary between _describing_ a system and _creating_ one is disappearing. T
 
 This is not a claim about AI replacing engineers. It's a claim about what engineering actually is when the cost of generating code approaches zero.
 
-<img alt="image" src="hero.png" />
-
 ## Evolution: From Vibing to Meta-Programming
 
 The data landed before the theory. LinearB analyzed 8.1 million pull requests across 4,800 teams in 42 countries and found: 🟡 AI-generated code produces 1.7× more issues than human code, waits 4.6× longer for review, and gets accepted at 32.7% versus 84.4% for human PRs. Developers _feel_ 20% faster; tasks take 19% longer end-to-end. This is the largest empirical study on developer productivity ever conducted, and it tells a clear story: the creation layer accelerated, the verification layer didn't.
