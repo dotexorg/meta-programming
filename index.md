@@ -11,23 +11,31 @@
 - [Landscape](landscape.md)
 -->
 
-The boundary between _describing_ a system and _creating_ one is disappearing. The main artifact of software engineering is no longer code — it's how you think.
+The boundary between _describing_ a system and _creating_ one is disappearing. The main artifact of software engineering is no longer code. It's how you think.
 
-This is not a claim about AI replacing engineers. It's a claim about what engineering actually is when the cost of generating code approaches zero.
+What does engineering look like when generating code costs almost nothing? The answer reshapes the job.
 
 ## Evolution: From Vibing to Meta-Programming
 
-The data landed before the theory. LinearB analyzed 8.1 million pull requests across 4,800 teams in 42 countries and found: 🟡 AI-generated code produces 1.7× more issues than human code, waits 4.6× longer for review, and gets accepted at 32.7% versus 84.4% for human PRs. Developers _feel_ 20% faster; tasks take 19% longer end-to-end. This is the largest empirical study on developer productivity ever conducted, and it tells a clear story: the creation layer accelerated, the verification layer didn't.
+The data landed before the theory. LinearB analyzed 8.1 million pull requests across 4,800 teams in 42 countries. 🟡 AI-generated code produces 1.7× more issues than human code, waits 4.6× longer for review, and gets accepted at 32.7% versus 84.4% for human PRs. Developers _feel_ 20% faster. Tasks actually take 19% longer end-to-end.
 
-The harness gap compounds the issue. Stanford's 2026 Meta-Harness study showed that changing the harness around a fixed LLM can produce a **6× performance gap on the same benchmark**. 🟡 Automated harness optimization outperformed expert hand-designed harnesses and surpassed the Claude Code baseline on TerminalBench-2 — without changing a single model weight. Particula confirmed this directionally on SWE-bench: the same model scored 42% with a stock scaffold and 78% after scaffold reconstruction. 🟡 Six frontier models within 0.8 points of each other. "If you're still chasing model upgrades, you're optimizing the wrong variable."
+The creation layer accelerated. The verification layer didn't.
 
-This is the evolutionary pressure. It runs in three stages.
+And it gets worse. Stanford's 2026 Meta-Harness study: change the harness around a fixed LLM and you get a **6× performance gap on the same benchmark**. 🟡 Automated harness optimization beat expert hand-designed harnesses and the Claude Code baseline on TerminalBench-2. No model weights changed. Particula confirmed this on SWE-bench: same model, 42% with a stock scaffold, 78% after scaffold reconstruction. 🟡 Six frontier models within 0.8 points of each other.
 
-**Vibe coding** is intent without understanding. You describe what you want, the agent produces something that looks right, you ship it. Fast, often wrong, occasionally catastrophic. This is where most teams discovered the LinearB pattern firsthand: creation accelerated, verification didn't scale with it. The gap between "AI wrote it" and "AI wrote it correctly" isn't closing on its own.
+If you're still chasing model upgrades, you're optimizing the wrong variable.
 
-**Agentic engineering** is the correction. Agents make decisions — they call tools, branch on results, orchestrate other agents, run for hours. The engineer's job shifts from writing code to designing the system that writes code: the pipeline, the verification gates, the handoffs. Microsoft's 10-month Copilot study across 878 pull requests confirmed the architectural shift: 🟡 _"the bottleneck moved from typing speed to knowledge, judgment, and ability to articulate tasks."_ That's not a productivity finding — it's a description of a new job.
+Three stages got us here.
 
-**Meta-programming** is what comes next. If the bottleneck is articulation — and the verification problem is structural — then the engineering artifact is language itself: the specs, rules, and pipelines that shape agent behavior. You're no longer writing programs. You're writing the instructions that write the programs, and teaching the system to improve those instructions from experience.
+**Vibe coding** is intent without understanding. You describe what you want, the agent produces something that looks right, you ship it. Fast, often wrong, occasionally catastrophic.
+
+This is where most teams discovered the LinearB pattern firsthand. The gap between "AI wrote it" and "AI wrote it correctly" doesn't close on its own.
+
+**Agentic engineering** is the correction. Agents call tools, branch on results, orchestrate other agents, run for hours. The engineer's job shifts from writing code to designing the system that writes code. Microsoft's 10-month Copilot study across 878 pull requests confirmed it: 🟡 _"the bottleneck moved from typing speed to knowledge, judgment, and ability to articulate tasks."_
+
+That's a description of a new job.
+
+**Meta-programming** is what comes next. If the bottleneck is articulation and the verification problem is structural, then the engineering artifact is language itself: specs, rules, pipelines. You're writing the instructions that write the programs. And teaching the system to improve those instructions from experience.
 
 ## The Thesis
 
@@ -37,11 +45,13 @@ The academic framing arrived independently. Tsinghua's March 2026 NLAH paper (Na
 
 DSPy (Stanford) arrived at the same structure from the optimization side: treat prompts as **learnable parameters** rather than hand-written strings. 🟡 BootstrapFewShot and MIPROv2 search the language space automatically. The underlying claim is identical — language is the parameter space, and it can be engineered.
 
-The practical consequence: **natural language is code.** A spec with a `DO NOT` clause is a constraint. A `GLOSSARY` is a type system. A `LESSONS.md` is a feedback loop. A pipeline definition is a program. The difference between a well-written AGENTS.md and a poorly-written one is the difference between a correct program and a buggy one — the compiler is just an LLM.
+So: **natural language is code.** A `DO NOT` clause is a constraint. A `GLOSSARY` is a type system. A `LESSONS.md` is a feedback loop. A pipeline definition is a program. The difference between a well-written AGENTS.md and a poorly-written one is the difference between a correct program and a buggy one. The compiler is just an LLM.
 
-This convergence is measurable at scale. A Bamberg/Heidelberg systematic analysis of 2,926 repositories across Claude Code, GitHub Copilot, Cursor, Gemini, and Codex found independent convergence on the same pattern: 🟡 linguistic configuration files (CLAUDE.md, AGENTS.md, COPILOT-INSTRUCTIONS.md) as the primary mechanism for shaping agent behavior. Pydantic operationalized this most explicitly: they extracted 4,668 PR review comments and distilled them into approximately 150 AGENTS.md rules. ⚪ Implicit engineering judgment, compiled into explicit agent instructions.
+Bamberg/Heidelberg confirmed this across 2,926 repositories spanning Claude Code, GitHub Copilot, Cursor, Gemini, and Codex: 🟡 linguistic configuration files (CLAUDE.md, AGENTS.md, COPILOT-INSTRUCTIONS.md) became the primary mechanism for shaping agent behavior. Independently. Pydantic went furthest: 4,668 PR review comments distilled into ~150 AGENTS.md rules. ⚪ Implicit engineering judgment, compiled into explicit agent instructions.
 
-AGENTS.md now has 60,000+ repositories and Linux Foundation endorsement. 🟡 Microsoft Research RiSE named "Intent Formalization" a grand challenge for 2026. AWS launched Kiro. A code review agent in production (April 2026) self-improves from pull request activity in real time, closing the loop that Layer 3 describes. 🟠 The industry is converging — language as the primary engineering artifact — without having named what it's converging on.
+AGENTS.md: 60,000+ repositories, Linux Foundation endorsement. 🟡 Microsoft Research RiSE named "Intent Formalization" a grand challenge for 2026. AWS launched Kiro. A code review agent in production (April 2026) self-improves from pull request activity in real time. 🟠
+
+The industry is converging on language as the primary engineering artifact. It just hasn't named it yet.
 
 ## Three Layers
 
@@ -49,19 +59,21 @@ LMP has structure. Three layers, each dependent on the one below.
 
 ### Layer 1: Persistent Model of Self
 
-Not documentation. Not memory. An epistemology — the agent's working model of what it knows, how it knows it, where it fails, and what constraints it operates under. This is what separates a generic model from a system shaped by a specific engineer's context.
+Not documentation. Not memory. An epistemology: what the agent knows, how it knows it, where it fails, what constraints it operates under. This is what separates a generic model from one shaped by a specific team's context.
 
-The performance difference is real. The ERL paper (Allard et al., March 2026) showed that agents operating with heuristics extracted from prior trajectories outperformed ReAct baselines by **+7.8%** on standard benchmarks. 🟡 Their finding: _"Heuristics provide more transferable abstractions than few-shot prompting."_ Persistent structured knowledge outperforms in-context examples — the format matters.
+The ERL paper (Allard et al., March 2026): agents with heuristics extracted from prior trajectories outperformed ReAct baselines by **+7.8%**. 🟡 _"Heuristics provide more transferable abstractions than few-shot prompting."_ Persistent structured knowledge beats in-context examples. Format matters.
 
-We measured this directly. In a controlled A/B test, the same architectural problem ran through a generic Claude Sonnet instance and through an agent with a structured knowledge base. 🟢 The generic agent asked for a code map. The agent with the KB flagged the exploration-versus-exploitation paradox — with evidence from prior sessions — before writing a line of code. The difference isn't code quality. It's the level of reasoning the agent brings to the problem before touching implementation. The broader practitioner community confirmed the pattern independently — Karpathy's framing of personal KB-building via LLMs (55K engagements, early 2026) named the same mechanism: the KB is the primary artifact, not the code it produces. 🟠
+We tested this. Same architectural problem, two setups: generic Claude Sonnet versus an agent with a structured knowledge base. 🟢 The generic agent asked for a code map. The KB agent flagged the exploration-versus-exploitation paradox — with evidence from prior sessions — before writing a line of code.
 
-Layer 1 explains why all production agent systems converge on human-readable markdown: AGENTS.md, CLAUDE.md, SKILL.md, DECISIONS.md, MEMORY.md. Markdown is version-controlled, readable by humans, parseable by agents, portable across model versions. 🟡 Anthropic's own approach — "Building Agents with Skills" — organizes persistent behavioral configuration as composable markdown files rather than model fine-tunes. Not a coincidence. It's the natural format for a shared epistemology.
+The difference isn't code quality. It's reasoning depth before implementation starts. Karpathy named the same mechanism independently (55K engagements, early 2026): the KB is the primary artifact, not the code it produces. 🟠
+
+This is why all production agent systems converge on human-readable markdown: AGENTS.md, CLAUDE.md, SKILL.md, DECISIONS.md, MEMORY.md. Version-controlled, readable by humans, parseable by agents, portable across model versions. 🟡 Anthropic organizes persistent behavioral configuration as composable markdown files rather than model fine-tunes. Markdown is the natural format for a shared epistemology.
 
 ### Layer 2: Personal Intent Language
 
-A language that lives between natural language and formal specification. When you say "need a webhook worker," a system with a strong Layer 2 already knows your stack, your naming conventions, your error-handling patterns, your deployment constraints. You don't repeat context — the language carries it.
+A language between natural language and formal specification. "Need a webhook worker" — and the system already knows your stack, naming conventions, error-handling patterns, deployment constraints. You don't repeat context. The language carries it.
 
-Microsoft Research RiSE named the formalization of this space a grand challenge for 2026. 🟡 Martin Fowler's progression maps the maturity curve: spec-first → spec-anchored → spec-as-source, with increasing precision at each level. 🟡 The tickets-are-prompts insight makes it concrete: a ticket written as a precise operational policy is already an agent instruction. A `DO NOT` is a contract clause. A `GLOSSARY` is a type system shared between engineer and agent.
+Microsoft Research RiSE named this a grand challenge for 2026. 🟡 Fowler's progression maps the maturity curve: spec-first → spec-anchored → spec-as-source. 🟡 A ticket written as a precise operational policy is already an agent instruction. A `DO NOT` is a contract clause. A `GLOSSARY` is a type system shared between engineer and agent.
 
 We verified the constraint layer specifically. In an ablation study, we stripped DO/DON'T sections from a structured spec and ran identical tasks. 🟢 Without the constraint language, the agent failed in patterns identical to raw prompting — wandering scope, incorrect assumptions about naming, missing edge-case handling. The DO/DON'T structure isn't documentation; it's a guard rail the agent actually uses.
 
@@ -69,13 +81,13 @@ We verified the constraint layer specifically. In an ablation study, we stripped
 
 ### Layer 3: Closed Loop
 
-The system observes what worked, extracts lessons, refines the model, improves the language — without touching weights.
+The system observes what worked, extracts lessons, refines its own instructions. No weight updates.
 
-Stanford's Meta-Harness study operationalized this at the harness level: automated harness optimization searching configurations the same way gradient descent searches weights. 🟡 The 6× performance gap between manual and optimized harnesses shows the scale of what's available in the language space, without any model change.
+Stanford's Meta-Harness study: automated harness optimization searching configurations the same way gradient descent searches weights. 🟡 The 6× gap between manual and optimized harnesses shows what's available in the language space alone.
 
-A separate end-to-end pipeline run validated the approach concretely. 🟢 Twenty-four files, 253 tests, zero regressions, approximately $5.50 in API cost — with structured process (Scout → Spec → Plan → Worker → Reviewer → Lessons) beating raw context injection on cost, quality, and first-attempt pass rate. The Lessons stage — where the reviewer agent extracts structured findings from the run — is what makes the next run cheaper and more accurate.
+We validated this end-to-end. 🟢 Twenty-four files, 253 tests, zero regressions, ~$5.50 in API cost. Structured process (Scout → Spec → Plan → Worker → Reviewer → Lessons) beat raw context injection on cost, quality, and first-attempt pass rate. The Lessons stage is what makes the next run cheaper.
 
-The compounding mechanism is what distinguishes Layer 3 from simple iteration. Each run narrows the gap between what you intend and what the agent produces. The knowledge base grows. The spec language tightens. Failure modes get documented before they recur. This is why LMP is a compounding return, not a one-time gain.
+Each run narrows the gap between what you intend and what the agent produces. The KB grows. The spec language tightens. Failure modes get documented before they recur. Compounding return, not a one-time gain.
 
 [See Self-Improvement →](./self-improvement.md)
 
@@ -83,11 +95,15 @@ The compounding mechanism is what distinguishes Layer 3 from simple iteration. E
 
 ## How This Was Built
 
-This documentation is built from 70+ research sessions and 9 controlled experiments — A/B tests, ablation studies, end-to-end pipeline runs. 🟢 The headline finding: structured process beat raw context injection on every measured dimension — cost ($6.63 vs $9.99), quality, and first-attempt pass rate.
+Built from 70+ research sessions and 9 controlled experiments. 🟢 Structured process beat raw context injection on every measured dimension: cost ($6.63 vs $9.99), quality, first-attempt pass rate.
 
-The three most recent experiments extended the picture. An edit tool investigation traced a persistent error pattern to our own extension, not the platform — the post-fix benchmark settled at 7.1% errors, all model mistakes, all self-recovering in one retry. 🟢 A model evaluation found that thinking level acts as a compliance-to-conviction dial: higher thinking produces conviction (holding position under pushback) rather than compliance, with a distinct soft sycophancy mode — saying no while providing the implementation anyway — identified as a new failure category not caught by standard benchmarks. 🟢 A documented degradation incident (April 2026 Opus) confirmed that the structured pipeline resists provider-side quality shifts by design: when model reasoning degrades, the externalized plan compensates. 🟢
+Three recent experiments extended the picture:
 
-External evidence — LinearB's 8.1M-PR dataset, Stanford's Meta-Harness results, Tsinghua's NLAH paper, the Bamberg/Heidelberg repository analysis — arrived independently and confirmed the same structural conclusions. Every major claim carries an explicit evidence marker. Where a claim rests on our experiments, you'll see 🟢. Where it rests on a primary source we've read, you'll see 🟡. When it's our synthesis without direct proof, it's marked ⚪.
+- **Edit tool investigation** traced a persistent error pattern to our own extension, not the platform. Post-fix benchmark: 7.1% errors, all model mistakes, all self-recovering in one retry. 🟢
+- **Model evaluation** found thinking level acts as a compliance-to-conviction dial. Higher thinking produces conviction (holding position under pushback), not compliance. A distinct failure mode: soft sycophancy — saying no while providing the implementation anyway. Not caught by standard benchmarks. 🟢
+- **Degradation incident** (April 2026 Opus) confirmed the structured pipeline resists provider-side quality shifts. When model reasoning degrades, the externalized plan compensates. 🟢
+
+External evidence — LinearB 8.1M PRs, Stanford Meta-Harness, Tsinghua NLAH, Bamberg/Heidelberg 2,926 repos — arrived independently and confirmed the same conclusions.
 
 ---
 
