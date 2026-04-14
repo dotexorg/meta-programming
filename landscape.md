@@ -104,7 +104,7 @@ The natural language layer of a harness can itself be treated as a portable exec
 
 ## People to Follow
 
-The most thorough public practitioner writing on agent system design is a 12-chapter *Agentic Engineering Patterns* guide (@simonw, Django co-creator) 🟠 — the best single reference for production harness decisions. When something new ships, this is usually the first rigorous take.
+The most thorough public practitioner writing on agent system design is a 12-chapter _Agentic Engineering Patterns_ guide (@simonw, Django co-creator) 🟠 — the best single reference for production harness decisions. When something new ships, this is usually the first rigorous take.
 
 Pi internals, subagent architecture, and the `createBranchedSession` fork-context pattern are documented most authoritatively at the source — Pi's creator (@badlogicgames, libgdx) publishes implementation details that aren't available elsewhere 🟠.
 
@@ -119,4 +119,4 @@ The insight that "learning at the harness layer produces compounding returns" co
 - Will AGENTS.md formalization under Linux Foundation produce a stable v1 spec, or fragment into tool-specific dialects?
 - How does effective context utilization (MECW at 10–40%) interact with very long agent trajectories — does it degrade further?
 
-*[← Index](./index.md) · [Specification →](./specification.md) · [Verification →](./verification.md) · [Self-Improvement →](./self-improvement.md)*
+_[← Index](./index.md) · [Specification →](./specification.md) · [Verification →](./verification.md) · [Self-Improvement →](./self-improvement.md)_
