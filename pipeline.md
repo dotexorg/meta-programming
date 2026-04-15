@@ -6,7 +6,7 @@ A structured workflow outperforms adding more information. By a measurable margi
 
 Giving an agent more context when it gets something wrong is the natural instinct. It is also wrong.
 
-We ran five variants on the same production EventBus refactor (509 TypeScript files, DDD architecture, Cloudflare Workers) to measure what actually drives correctness. 🟢
+We ran five variants on the same production EventBus refactor (509 TypeScript files, DDD architecture, Cloudflare Workers) to measure what actually drives correctness.
 
 | Run | Setup | Cost | Architecture | Review |
 |-----|-------|------|-------------|--------|
@@ -18,7 +18,7 @@ We ran five variants on the same production EventBus refactor (509 TypeScript fi
 
 The pipeline run (#4) was the cheapest correct solution and the only one that passed review on the first attempt. Adding a code map to that same pipeline (#5) cost 51% more and introduced a review failure. The map gave the agent a fast path to the highest-ranked files, which meant it stopped exploring and missed scope. Without the map, it grepped broadly, found the full picture, and built accordingly. [See Experiments](./experiments.md#experiment-1-process-vs-context).
 
-Auto-generated context reduces success by 3% and increases cost by 20%; human-written boundaries improve success by 4%, across 138 real-world tasks and three models (ETH Zurich, Feb 2026). 🟡 Same mechanism at a different scale: pre-loaded navigation shortcuts substitute for actual exploration.
+Auto-generated context reduces success by 3% and increases cost by 20%; human-written boundaries improve success by 4%, across 138 real-world tasks and three models. Same mechanism at a different scale: pre-loaded navigation shortcuts substitute for actual exploration.
 
 The pipeline adds roughly 10× the latency of a raw prompt for simple changes. But trace a full week of work: two raw failures per feature, one pipeline success. The pipeline reaches working code faster. The overhead isn't in the pipeline. It's in the failures it prevents.
 
@@ -33,19 +33,19 @@ The six stages map onto a research-to-delivery arc. Not every task needs all of 
 | Multi-file feature | Spec → Plan → Workers → Review |
 | Cross-domain refactor | Scout → Spec → Plan → Workers → Review → Lessons |
 
-**Scout.** A lightweight agent (Haiku-class) reads the codebase and writes a structured briefing. It never touches anything. Its job is to compress signal so downstream workers don't pay full-context prices for orientation. In our architecture, scout output is cached by git commit hash, so if nothing changed, the briefing is free. 🟢
+**Scout.** A lightweight agent (Haiku-class) reads the codebase and writes a structured briefing. It never touches anything. Its job is to compress signal so downstream workers don't pay full-context prices for orientation. In our architecture, scout output is cached by git commit hash, so if nothing changed, the briefing is free.
 
-**Spec.** A structured specification is written before any implementation begins. In one tech-lead run, a clarifying question during spec review revealed the feature being designed was already configured in the system. What looked like a multi-day implementation reduced to a one-line config change. Without spec review, a raw agent on the same task implemented the entire feature from scratch, duplicating existing work. 🟢 [See Specification](./specification.md) for structure.
+**Spec.** A structured specification is written before any implementation begins. In one tech-lead run, a clarifying question during spec review revealed the feature being designed was already configured in the system. What looked like a multi-day implementation reduced to a one-line config change. Without spec review, a raw agent on the same task implemented the entire feature from scratch, duplicating existing work. [See Specification](./specification.md) for structure.
 
 **Plan.** The spec is decomposed into atomic, sequenced tasks with explicit acceptance criteria. Ordering matters: dependencies become explicit, so workers don't block each other and parallelism opportunities are visible upfront.
 
-**Workers.** Individual subagents execute tasks in isolation. Context does not bleed between workers: a Task 6 that ran 106 turns did not degrade Task 7 in one pipeline run, because Task 7 started clean. 🟢 This isolation is the mechanism that makes sequential multi-task work reliable at scale.
+**Workers.** Individual subagents execute tasks in isolation. Context does not bleed between workers: a Task 6 that ran 106 turns did not degrade Task 7 in one pipeline run, because Task 7 started clean. This isolation is the mechanism that makes sequential multi-task work reliable at scale.
 
-**Review.** A separate agent with no implementation history reads the output and checks it against the spec. Review and implementation sharing context is the most common pipeline mistake. Self-evaluation bias is real. Agents rate their own work highly even when it is broken (Anthropic, 2026). 🟡 A clean reviewer is an honest reviewer. [See Verification](./verification.md) for layered pre-flight requirements.
+**Review.** A separate agent with no implementation history reads the output and checks it against the spec. Review and implementation sharing context is the most common pipeline mistake. Self-evaluation bias is real. Agents rate their own work highly even when it is broken (Anthropic, 2026). A clean reviewer is an honest reviewer. [See Verification](./verification.md) for layered pre-flight requirements.
 
-**Lessons.** After merge, a final agent extracts what changed, what failed, and what patterns should persist. Per-session extraction is cheap enough for a Haiku-class model. Cross-session promotion (deciding which patterns generalize) needs a stronger model; cheap promotion produces rule pollution. 🟢 This stage closes the loop: execution experience becomes structured knowledge that changes how future workers reason. [See Self-Improvement](./self-improvement.md).
+**Lessons.** After merge, a final agent extracts what changed, what failed, and what patterns should persist. Per-session extraction is cheap enough for a Haiku-class model. Cross-session promotion (deciding which patterns generalize) needs a stronger model; cheap promotion produces rule pollution. This stage closes the loop: execution experience becomes structured knowledge that changes how future workers reason. [See Self-Improvement](./self-improvement.md).
 
-This parallels Claude Code's Coordinator Mode (Research → Synthesis → Implementation → Verification). The difference: CC runs these as in-process phase shifts within a long session; our pipeline runs each as a separate process with a context reset. Both work. Clean processes are simpler to debug. 🟡
+This parallels Claude Code's Coordinator Mode (Research → Synthesis → Implementation → Verification). The difference: CC runs these as in-process phase shifts within a long session; our pipeline runs each as a separate process with a context reset. Both work. Clean processes are simpler to debug.
 
 ## Orchestrator never reads files
 
@@ -53,11 +53,11 @@ The orchestrator delegates. It does not explore.
 
 If the orchestrator's messages contain file contents, something is wrong. It should route work: task descriptions, dependencies, acceptance criteria. Nothing else.
 
-In our architecture the orchestrator is a skill running in the parent process; workers are separate agent processes. Pi's subagent tool is unavailable inside another subagent, so orchestration must happen from the top level. 🟢 We learned this the hard way. tech-lead couldn't delegate to scout until we restructured it as a skill.
+In our architecture the orchestrator is a skill running in the parent process; workers are separate agent processes. Pi's subagent tool is unavailable inside another subagent, so orchestration must happen from the top level. We learned this the hard way. tech-lead couldn't delegate to scout until we restructured it as a skill.
 
 An orchestrator that reads files defeats itself. It fills context with details that belong to workers. It becomes a sequential bottleneck. Every read is a turn spent on work that should be parallelized.
 
-This rule degrades under pressure. One debugging session: the orchestrator called scout five times (the skill says "NEVER call scout twice"), then started reading files directly. Caught mid-session. 🟢 The pattern is consistent, when delegation can't solve the problem, the orchestrator reverts to direct exploration. Sometimes that's correct. Novel debugging may need human collaboration, not longer chains.
+This rule degrades under pressure. One debugging session: the orchestrator called scout five times (the skill says "NEVER call scout twice"), then started reading files directly. Caught mid-session. The pattern is consistent, when delegation can't solve the problem, the orchestrator reverts to direct exploration. Sometimes that's correct. Novel debugging may need human collaboration, not longer chains.
 
 ## Coordinator patterns: continue vs spawn fresh
 
@@ -69,7 +69,7 @@ The continue-vs-spawn decision is the most consequential call the coordinator ma
 
 The failure modes are symmetric. A fork that should have been clean carries invisible priors. The worker "knows" things from the parent's exploration that bias its approach. A clean agent doing continuation work has to rediscover everything the parent already built.
 
-Model selection per stage is part of the coordinator decision, not an afterthought. A pipeline run with Haiku scouts and Sonnet workers cost $4.77 total and found the root cause. A solo Sonnet session on the same task (no pipeline structure) burned $6.66+ and failed, looping on wrong hypotheses for ~86K tokens before the user intervened. 🟢 The savings came from the structure, not just the cheaper scouts.
+Model selection per stage is part of the coordinator decision, not an afterthought. A pipeline run with Haiku scouts and Sonnet workers cost $4.77 total and found the root cause. A solo Sonnet session on the same task (no pipeline structure) burned $6.66+ and failed, looping on wrong hypotheses for ~86K tokens before the user intervened. The savings came from the structure, not just the cheaper scouts.
 
 ## Fork vs clean agent: when to share context, when to start fresh
 
@@ -91,7 +91,7 @@ Contamination is the more dangerous direction. A fork carrying stale priors solv
 
 Forking runs on Anthropic's prompt cache. The child's first request shares a byte-identical prefix with the parent. Same system prompt, same prior turns. The API matches, returns `cache_read`, skips reprocessing. On 100K+ tokens of context, the fork's first call costs ~10% of cold start.
 
-Claude Code's fork implementation preserves this by design: all children receive identical placeholder tool results across every fork, and only the final user-message directive differs per worker. 🟡 This is what makes multi-worker fan-outs economically viable. The expensive prefix is paid once by the parent and shared by all children.
+Claude Code's fork implementation preserves this by design: all children receive identical placeholder tool results across every fork, and only the final user-message directive differs per worker. This is what makes multi-worker fan-outs economically viable. The expensive prefix is paid once by the parent and shared by all children.
 
 The condition is strict. Byte-identical. System prompt, tool definitions, model. All must match exactly. One character of whitespace? Full reprocessing. Different model on a fork? Cache gone. This is why standardizing prompts across pipeline stages isn't style. It's economics.
 
@@ -101,7 +101,7 @@ A long-running orchestrator keeps the cache warm. Idle time between dispatches i
 
 A skill runs in the orchestrator's process, shares its cache, and pays zero spawn overhead. An agent is a separate process: it starts cold, reloads tools, and rebuilds context from scratch.
 
-The cache math is concrete. Fourteen subagents processing 50K tokens each generate 700K `cache_create` tokens and zero `cache_read`. The same work done in one long session with context sharing produces an 11:1 read-to-create ratio. 🟢 The parallel workload costs an order of magnitude more in cache terms than the sequential session, before accounting for spawn overhead.
+The cache math is concrete. Fourteen subagents processing 50K tokens each generate 700K `cache_create` tokens and zero `cache_read`. The same work done in one long session with context sharing produces an 11:1 read-to-create ratio. The parallel workload costs an order of magnitude more in cache terms than the sequential session, before accounting for spawn overhead.
 
 This is not an argument against subagents. Isolation and parallelism justify the cost for complex tasks. But for lightweight, repeatable operations (search, format, summarize), a skill is almost always the right choice.
 
@@ -111,7 +111,7 @@ The decision:
 - Task is lightweight and repeatable → Skill
 - Task is a natural continuation of the parent → Fork
 
-Verification is often where the model breaks down, not execution. Augment Code's single-writer rule for hotspot files and sequential merge strategy reflects this: when verification is the bottleneck, adding more parallel execution makes things worse, not better. 🟡 Azure's multi-agent taxonomy names five patterns (Sequential, Concurrent, Group Chat, Handoff, Magentic) and applies the same rule across all of them: use the minimum complexity that solves the problem reliably.
+Verification is often where the model breaks down, not execution. Augment Code's single-writer rule for hotspot files and sequential merge strategy reflects this: when verification is the bottleneck, adding more parallel execution makes things worse, not better. Azure's multi-agent taxonomy names five patterns (Sequential, Concurrent, Group Chat, Handoff, Magentic) and applies the same rule across all of them: use the minimum complexity that solves the problem reliably.
 
 ## Settled questions
 
@@ -119,6 +119,6 @@ Verification is often where the model breaks down, not execution. Augment Code's
 
 ## Open questions
 
-- **Human-in-loop placement.** One debugging session: the breakthrough came from the user asking a direct question. Not from delegation. Three wrong hypotheses. User intervened. Fixed. 🟢 We have no pattern for "agent requests human input at step N" that doesn't break autonomous flow. Where should the intervention threshold sit? No data.
+- **Human-in-loop placement.** One debugging session: the breakthrough came from the user asking a direct question. Not from delegation. Three wrong hypotheses. User intervened. Fixed. We have no pattern for "agent requests human input at step N" that doesn't break autonomous flow. Where should the intervention threshold sit? No data.
 
 - **Pipeline crash recovery.** Worker dies mid-task, progress is lost. Context reset between workers is a feature. But it means no checkpoint within a task. CC's PreCompact/PostCompact hooks address orchestrator memory loss, not worker crashes. Checkpointing is undesigned. The experiment: write worker state to `.pi/pipeline-state/` after each phase, test recovery from simulated kills.
