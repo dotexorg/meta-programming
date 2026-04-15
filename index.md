@@ -1,5 +1,3 @@
-# Meta-Programming
-
 <!-- NAV
 - [Meta-Programming](index.md)
 - [Specification](specification.md)
@@ -13,7 +11,7 @@
 
 The boundary between _describing_ a system and _creating_ one is disappearing. The main artifact of software engineering is no longer code. It's how you think.
 
-This is not a claim about AI replacing engineers. It's a claim about what engineering actually is when the cost of generating code approaches zero.
+How you structure an agent's memory, specs, and feedback loops matters more than which model you pick. This site documents why — and what to do about it.
 
 ## Evolution: From Vibing to Meta-Programming
 
@@ -81,7 +79,7 @@ The compounding mechanism is what distinguishes Layer 3 from simple iteration. E
 
 ---
 
-## How This Was Built
+## The progression: from vibe coding to meta-programming
 
 This documentation is built from 70+ research sessions and 9 controlled experiments: A/B tests, ablation studies, end-to-end pipeline runs. 🟢 The headline finding: structured process beat raw context injection on every measured dimension — cost ($6.63 vs $9.99), quality, and first-attempt pass rate.
 
@@ -89,25 +87,25 @@ The three most recent experiments extended the picture. An edit tool investigati
 
 External evidence confirms the same structure: LinearB's 8.1M-PR dataset, Stanford's Meta-Harness results, Tsinghua's NLAH paper, the Bamberg/Heidelberg repository analysis. All arrived independently. All confirmed the same structural conclusions. Every major claim carries an explicit evidence marker. Where a claim rests on our experiments, you'll see 🟢. Where it rests on a primary source we've read, you'll see 🟡. When it's our synthesis without direct proof, it's marked ⚪.
 
----
+Velocity scaled. Verification didn't. Amazon mandated Kiro across 21K agents, laid off 30K reviewers, then hit 4 Sev-1 incidents in 90 days — a 6-hour outage, 6.3M lost orders. 🟠
 
-## How to Read Evidence Levels
+**Phase 3: Meta-programming.** The agent's operating context — memory, specs, rules, feedback loops — becomes the primary engineering artifact. Change the harness, not the model. Stanford proved this in March 2026: same LLM, different scaffolding, SOTA results. 🟡 SWE-bench: custom scaffolding alone adds +10%. Same model underneath. 🟡
 
-Every major claim in this documentation carries an evidence marker:
+You can't delegate your way to a better agent — you have to build the system around it that makes every session compound on the last.
 
-| Marker                   | Meaning                                                                   |
-| ------------------------ | ------------------------------------------------------------------------- |
-| 🟢 **Proven**            | Our experiment, our data, measured result                                 |
+| Marker                   | Meaning                                                                  |
+| ------------------------ | ------------------------------------------------------------------------ |
+| 🟢 **Proven**            | Our experiment, our data, measured result                                |
 | 🟡 **Trusted source**    | Anthropic, Microsoft Research, peer-reviewed. We read the primary source |
-| 🟠 **Community reports** | Widely observed, not independently verified by us                         |
-| 🔴 **Unverified**        | Heard, not checked                                                        |
-| ⚪ **Opinion**           | Our synthesis, reasoned but not proven                                    |
+| 🟠 **Community reports** | Widely observed, not independently verified by us                        |
+| 🔴 **Unverified**        | Heard, not checked                                                       |
+| ⚪ **Opinion**           | Our synthesis, reasoned but not proven                                   |
 
----
+Writing specs, structuring memory, and encoding feedback isn't prep work you do before the real engineering starts. It is the engineering.
 
-## What's Inside
+LMP formalizes this into three layers (next section). The industry is converging on the same idea without coordinating. 60,000 repos now ship AGENTS.md — a cross-tool standard for agent instructions under the Linux Foundation. 🟠 GitHub's spec-kit hit 79K stars: "the lingua franca of development moves to a higher level, and code is the last-mile approach." 🟠
 
-This documentation covers the full LMP framework, from first principles to production tooling.
+Academia named it. Microsoft Research: "Intent Formalization" — a grand challenge (March 2026). 🟡 Tsinghua's NLAH went further: harness behavior externalized as a portable executable artifact, independent of the model underneath. 🟡 DSPy treats prompts as learnable parameters and optimizes them automatically. Prompts as code. Literally. 🟡
 
 **[Specification](./specification.md)**: DO/DON'T/GLOSSARY structure, Spec-Driven Development, Intent Formalization as a grand challenge. How language becomes contract.
 
