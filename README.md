@@ -1,5 +1,6 @@
 # Linguistic Meta-Programming
-<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/1ac1a13e-e92d-4915-8597-17dec7a1d95f" />
+
+<img alt="image" src="assets/index_hero.avif" />
 
 How coding agents improve through language — specs, reviews, lessons, rules — without touching model weights.
 
