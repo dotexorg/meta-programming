@@ -1,109 +1,136 @@
-# Principles
+# 6 principles + how to apply them
 
-Six principles that explain why some agent workflows succeed and others fail — each backed by experiments, and each actionable from day one.
+Six principles extracted from A/B tests and production failures. Three maturity levels show which to implement first.
 
-## The 6 Principles
+## The 6 principles
 
-### 1. Process > Context
+### 1. Process > context
 
-Structured workflow beats more information. Giving an agent better scaffolding — spec → plan → implement → review — consistently outperforms giving it more context about the codebase. 🟢 The difference is measurable: a pipeline without code map cost $6.63 and passed review on the first attempt; the same pipeline with code map cost $9.99 and failed review. The variable was the map, not the pipeline.
+Structured workflow beats more information. Adding code maps, background files, or richer context doesn't reliably improve results. Process does. 🟢
 
-The gap is not marginal. A meta-harness produces a 6x performance improvement over baseline scaffolding (Stanford, 2026) 🟡 — consistent with SWE-bench results showing a custom task harness adds +10% over standard scaffolding. 🟢 The mechanism is not mysterious: a constrained search space routes the model toward solutions faster than raw information volume does.
+The proof is direct. In a 5-run A/B test refactoring a production EventBus (509 TypeScript files, 53K lines, DDD architecture), the winning configuration wasn't the most-informed one. Tech-lead pipeline without a code map: $6.63, correct architecture, first-try review pass. Same pipeline with a code map added: $9.99, failure requiring a fix. The map cost $3.36 extra and introduced a failure. 🟢 ETH Zurich independently tested the same phenomenon across 138 real-world tasks and three models: auto-generated context files reduced success by 3% and increased cost by 20%. Human-written boundaries improved success by 4%. 🟡
 
-The instinct to "give the agent everything it needs to know" is often counterproductive. Process constraints are more valuable than information volume. See [Pipeline](./pipeline.md) for this principle in action.
+The mechanism: code maps give the agent a fast path through the codebase. It follows the path instead of exploring. When the map doesn't capture the full picture (it never fully does) the agent misses scope. SWE-bench confirms the broader point: a custom task harness adds 10% over standard scaffolding with the same underlying model. Same model, different process. 🟡
 
-### 2. Boundaries Are Not Optional
+See [Pipeline](./pipeline.md) for the full workflow.
 
-Without explicit constraints — what to do, what not to touch, and what terms mean — an agent behaves identically to a raw prompt. Boundaries are not politeness; they are load-bearing.
+### 2. Boundaries are not optional
 
-🟢 A single instruction, `DO NOT modify classifyTicket`, prevented two distinct failure types across repeated runs. The industry has converged on this pattern under the name SDD (Specification-Driven Development) 🟠 — the mechanism is the same in both cases: constrained solution space produces fewer failure modes. Three lines — `DO / DO NOT / GLOSSARY` — turned two consecutive raw failures into a first-attempt success on the same task. 🟢
+Without explicit constraints, agents fail identically to raw prompts. Not slower. Not more expensively. Identically. 🟢
 
-See [Specification](./specification.md) for the full pattern.
+In a direct ablation (Telegram bot feature addition), two consecutive failures without a spec. First run corrupted existing prompt handling; second misunderstood the word "reply." Both failures were deterministic. They'd have happened every time. Adding `DO NOT modify classifyTicket` to the spec prevented both. Three lines eliminated two distinct failure types. 🟢
 
-### 3. Exploration vs Exploitation
+The minimum viable spec has three parts: DO (what to build + acceptance criteria), DO NOT (files and patterns to leave alone), GLOSSARY (any term with room for interpretation, e.g., "fast" = < 200ms p95). The industry has converged on this structure: spec-kit (79K GitHub stars), Kiro, and Tessl all enforce some variant of it. 🟠
 
-Navigational instructions narrow the agent's search space in ways that hurt outcomes. When you tell an agent *where* to look and *how* to proceed, it stops exploring — and exploration is where correct solutions come from.
+See [Specification](./specification.md).
 
-🟢 Code maps helped navigation (2.75× cheaper on orientation) but hurt implementation scope — the agent with a map took the fast path and missed 6 of 7 queues that needed refactoring. Auto-generated context reduces performance by 3% versus letting the model navigate freely (ETH Zurich) 🟡 — a small delta that compounds badly when the task requires finding non-obvious solutions.
+### 3. Exploration vs exploitation
 
-The correct formula: specify **WHAT** to build and **WHY** it matters, add **DO NOT** constraints for what must not change, and leave **HOW** entirely to the agent. See [Context Engineering](./context-engineering.md) for the mechanics.
+Navigational hints hurt. Requirements don't. The distinction matters. 🟢
 
-### 4. Separate Builder from Reviewer
+Telling an agent where to look ("start with grep X, check file Y") narrows the search space before the agent understands the problem. It follows the path, misses adjacent context, builds to the path rather than the problem. Telling it what to build, why, and what to leave alone gives it room to discover scope. The codemap result in Experiment 1 is direct evidence: without the map, the agent grepped broadly, found the full picture, produced correct architecture. With the map, it took the fast path and missed scope. 🟢⚪
 
-Agents grade their own work generously. An agent that writes code and then reviews it will report success even when the code is broken. Separation is not bureaucracy — it is the only reliable verification path.
+ETH Zurich measured the same pattern: auto-generated context files reduced task success by 3% across 138 tasks. Small delta that compounds when the task requires finding non-obvious solutions. 🟡
 
-🟢 In repeated experiments, self-review produced "excellent" verdicts on broken implementations. The failure runs deeper than simple inaccuracy: higher thinking levels produce a soft sycophancy pattern where the model formally states it will follow a rule, then implements a violation framed as a "workaround" — passing a superficial check while substantively failing (Experiment 8). 🟢 A race condition surfaced only under multi-model review — neither model found it alone (BSWEN, 133 cycles) 🟡 — and four Severity-1 incidents at a major cloud provider traced to the identical structural failure in production: agent output promoted without a verification gate (institutional post-mortem) 🟡. Claude Code separates the Verification Agent role for the same reason.
+Claude Code handles this structurally via separate agent types with different tool permissions. The explore agent can't call edit tools. Our formulation is explicit rather than structural, which makes it portable. 🟡
 
-Different models have different blind spots. Multi-model review is not redundancy — it is coverage. See [Verification](./verification.md).
+### 4. Separate builder from reviewer
 
-### 5. Atomic Tasks with Context Reset
+Agents praise their own work. This isn't a model quality issue. It's a structural property of single-agent review. 🟢
 
-One task. Verify. Commit. Reset context. Move to the next. This sequence is not overhead — it is the unit of reliable agent work.
+Anthropic documents "self-evaluation bias" explicitly. In a 133-cycle study across four models (BSWEN), each model had different blind spots: GPT caught security issues and non-idiomatic patterns; Claude caught architectural problems. A race condition surfaced only under multi-model review. Invisible to both models reviewing their own output. 🟡 The failure mode runs deeper than generous self-assessment. Higher thinking levels produce a soft sycophancy pattern: the model formally states it won't violate a rule, then implements the violation framed as a "workaround". Passing a surface check while substantively failing (Experiment 8). 🟢
 
-🟢 A 106-turn task did not contaminate subsequent tasks after a context reset. The agent's effective working window may collapse to 10–40% of its nominal context limit depending on task complexity (MECW) 🟡 — long-running tasks do not get more done; they get noisier. Context reset also provides structural resistance to silent model degradation: when provider-side quality drops (Experiment 9 — thinking depth -67%, cost 80×), an externalized plan written to disk anchors task execution even as the model's own reasoning degrades. 🟢 The commit-and-reset cadence gives you a clean rollback point after every verified increment.
+The scale of the consequence: Amazon deployed 21K agents with 80% team adoption in 90 days, then hit 4 Sev-1 incidents in the following 90 days, including a 6-hour outage. Velocity scaled faster than verification. 🟠 Verification isn't optional overhead. It's what keeps this from happening.
 
-See [Pipeline](./pipeline.md) for the full sequencing pattern.
+See [Verification](./verification.md).
 
-### 6. Extraction ≠ Promotion
+### 5. Atomic tasks with context reset
 
-Not every lesson belongs in long-term memory. Per-session extraction — writing down what went wrong — is cheap and worth doing every time. Cross-session promotion — elevating a finding into the shared knowledge base — requires the strongest available model and deliberate judgment.
+One task → verify → commit → reset → next. No exceptions. 🟢
 
-Induction quality (the ability to extract generalizable rules from specific cases) correlates directly with model capability (OpenReview) 🟡. This is why per-session extraction can run on a cheaper model while cross-session promotion requires the strongest available — a pattern confirmed by Claude Code’s architecture, where extraction uses the current model and promotion routes to Opus (CC Ch.11). Undiscriminating promotion pollutes the KB with noise that future sessions inherit. See [Self-Improvement](./self-improvement.md).
+A 106-turn task in Experiment 3 didn't contaminate subsequent tasks. Because we reset between them. Without the reset, errors that slip through review compound in later tasks; the agent tries to correct them and often makes things worse. 🟢 Effective context degrades well before the nominal limit: complex reasoning can collapse at 10–40% utilization depending on task type (MECW, Chroma 2025; confirmed by practitioners at Sentry and in production 1M-context sessions). 🟡 Long sessions don't get more done. They get noisier.
 
-## Level 1 — Minimum Viable Process (Day One)
+Context reset also defends against provider-side model degradation. When model quality drops silently (as in the April 2026 Opus incident (-67% thinking depth, 80× cost increase), an externalized plan written to disk keeps the task anchored even as the model's own reasoning deteriorates (Experiment 9). 🟢
 
-Three practices you can adopt immediately, before any pipeline or tooling exists.
+Tasks spanning 30+ files should be split into 2–3 subtasks before starting, not mid-session. 🟢⚪
 
-**Every task gets DO/DO NOT/GLOSSARY.** Write three lines before you write the prompt: what must happen, what must not change, what the ambiguous terms mean in this codebase. 🟢 This alone eliminates the majority of task failures.
+### 6. Extraction ≠ promotion
 
-**Commands, not prose.** Agents do not respond to values or intent. `run: npm test -- --coverage` changes behavior; "we value well-tested code" does not. 🟡 Controlled testing across 10+ runs per pattern shows prose instructions produce zero measurable behavior change. Every behavioral requirement must be expressed as an executable command or a verifiable condition.
+Per-session extraction and cross-session promotion are different operations with different cognitive demands. Running them on the same model level pollutes the knowledge base. 🟡
 
-**Specify WHAT, not WHERE.** Resist the urge to point the agent at specific files or tell it which function to edit. Describe the outcome you need and let the agent find the path. Navigation constraints hurt more than they help (see Principle 3).
+Extraction asks: what specifically happened in this session? Factual summarization. A cheap model handles it well. Promotion asks: what generalizable rule does this represent? Synthesis from specific cases to general patterns correlates directly with model capability (OpenReview 2025). 🟡 Run promotion with a weak model and the KB fills with case-specific noise masquerading as universal rules.
 
-## Level 2 — Pipeline (First Week)
+Claude Code separates them architecturally: `extractMemories` uses whatever model is running; `/insights` (cross-session promotion) routes to Opus. The split reflects the actual cognitive load of each task. 🟡
 
-Once the single-task pattern is stable, introduce structure around the full workflow.
+See [Self-Improvement](./self-improvement.md).
 
-**Separate builder from reviewer.** Run implementation in one session, review in a fresh one — ideally with a different model. The builder session ends at a commit; the reviewer session starts from that commit with no prior context. This is the minimal multi-agent setup, and it works.
+## Level 1: minimum viable process (day one)
 
-**Deterministic checks before LLM review.** Type-checking, linters, and test runners catch entire classes of errors before any token is spent on review. The caveat: they do not catch logic bugs. 🟢 The type-checker passed on code with a significant logic error. Deterministic checks are necessary but not sufficient.
+Three habits that eliminate most failures before you build any pipeline.
 
-**One task → verify → commit → reset.** The pipeline is the unit. Do not chain tasks without verification steps between them. Each commit is a checkpoint; each reset is a clean start.
+**DO / DO NOT / GLOSSARY on every task.** Three lines before the prompt. DO: what to build + when it's done. DO NOT: which files, APIs, and patterns to leave untouched. GLOSSARY: any term that could be interpreted two ways. In the ablation, both consecutive failures traced to missing one of these three. 🟢 Don't write paragraphs. Write three lines.
 
-**Scout reads, workers implement.** Use a dedicated exploration pass — a scout agent with read-only tools — to gather context before implementation begins. The scout produces a structured summary; workers consume that summary, not the raw codebase. This keeps implementation sessions focused and prevents the over-navigation failure mode.
+**Commands, not prose.** "We value clean code" produces zero behavior change. `run: npm test -- --coverage && assert coverage > 80%` works. Across 10+ runs per pattern, prose instructions don't move the needle; executable commands do. 🟠 Every behavioral requirement goes as a verifiable command or condition.
 
-## Level 3 — Learning Loop (First Month)
+**Specify WHAT, not WHERE.** No "start with grep X" or "look at file Y." Describe the outcome; leave the path to the agent. Navigational hints trigger exploitation over exploration. The agent follows the path instead of finding the right one (Principle 3). 🟢
 
-Once the pipeline runs reliably, close the feedback loop so each feature makes the next one cheaper.
+## Level 2: pipeline (first week)
 
-**Extract lessons after every feature.** At the end of each session, ask: what broke, what was unexpectedly hard, what assumption was wrong? Write it down. The extraction cost is minutes; the compounding value is weeks.
+Separate roles, sequential execution, context reset between tasks.
 
-**Spec before code, always.** Writing the specification — acceptance criteria, constraints, definition of done — before implementation catches design problems that cost far more to fix in code. 🟢 The spec phase caught a barrel re-export anti-pattern before any code was written. The spec is not documentation; it is a pre-flight check.
+**Scout reads, workers implement.** One exploration pass before any implementation. The scout reads the codebase, writes a structured report, caches it by git commit hash. Workers get the task plus the scout report. Not the full codebase. The orchestrator never reads files directly. 🟢
 
-**KB as working memory, not documentation.** The knowledge base is not a README. It is the accumulated understanding of what works and what doesn't in this specific codebase and workflow. Its value is not in what it records — it is in how it changes what the agent (and you) try next.
+**Deterministic checks before LLM review.** `tsc`, `npm test`, linter. Run these first. They catch whole classes of errors without burning tokens. But they don't catch logic bugs. 🟢 In Experiment 5, `tsc` passed on code with a corrupted `JIRA_SERVICE_USER` assignment. A runtime logic error invisible to the type checker. Deterministic checks are necessary, not sufficient.
 
-## Anti-Patterns
+**Builder and reviewer in separate sessions.** Builder commits and stops. Reviewer starts fresh with no prior context. Ideally different models. GPT reviewing Claude's output catches failures Claude self-review misses, and vice versa. 🟢🟡
 
-**"Make it good."** No DO/DO NOT, no GLOSSARY, no constraints. Fails identically to a raw prompt, regardless of how capable the model is. Boundaries are load-bearing; remove them and the structure collapses.
+**One task, one commit, one reset.** Verify after every task. Commit. Start the next in a clean context. The reset is structural, not optional. 🟢
 
-**Code map as default.** Passing a full file tree and codebase summary feels thorough. In practice it narrows the agent's search when the task requires scope discovery. 🟢 On a refactoring task, the code-map run cost 51% more and failed. Code maps help for orientation but hurt for implementation where the agent needs to discover scope through exploration.
+## Level 3: learning loop (first month)
 
-**Self-review.** An agent reviewing its own output will mark broken code as excellent. This is not a model quality issue — it is a structural property of single-agent review. Never use the same session for implementation and verification.
+The agent improves without fine-tuning. Most teams skip this layer entirely.
 
-**Monster tasks.** Tasks spanning 50+ files do not get done — they get hallucinated. Decompose until each task touches fewer than 10 files and has a verifiable output. If you cannot write an acceptance test for it, the task is too large.
+**Extract lessons after every feature.** End of session: what broke, what was unexpectedly hard, what assumption was wrong. Write it down. A cheap model (Sonnet, Haiku) handles this. It's factual summarization. Don't promote yet. 🟢🟡
 
-**Trust without verification.** Four Severity-1 incidents traced to one root cause — agent output promoted to production without a verification gate 🟡. The pipeline exists precisely to make verification unavoidable, not optional.
+**Promote carefully with a strong model.** Cross-session promotion (turning session lessons into general rules) requires judgment. Use the strongest available model. Cheap promotion produces rules that sound universal but are actually case-specific. Over time, this fills your spec files with noise that future sessions inherit and can't easily clean up. 🟡
 
-## Complementary Implementations
+**Spec before code, always.** In Experiment 4, the agent proposed a barrel re-export strategy during spec review. Asked to explain it, the agent recognized it as an anti-pattern and removed it. Without spec review, that decision would have been built, merged, and lived in production. Spec is the cheapest place to catch errors. Nothing has been written yet. 🟢
 
-These principles are validated against production systems, not derived from theory. Claude Code implements several of them directly: the Verification Agent enforces Principle 4, and tiered memory promotion enforces Principle 6 (CC Ch.11). 🟢 That convergence suggests the patterns are load-bearing rather than stylistic preferences.
+**KB as working memory, not documentation.** In a direct A/B (Experiment 6), a generic Sonnet answered "give it a code map" when asked how to handle a complex refactor. The same model with an 8KB structured KB answered "careful, exploration vs exploitation paradox" and cited the tradeoff with evidence. The difference wasn't code quality. It was thinking level. 🟢
 
-The distinction between a framework like this and any production implementation is specificity. Production systems solve engineering problems — tool design, memory architecture, model selection. These principles address the meta-layer: why certain workflow shapes succeed, what failure modes are structural rather than incidental, and how to adapt when the standard playbook doesn't fit.
+## Anti-patterns
 
-Teams building on top of existing agent infrastructure can apply these principles without changing the underlying tooling. The workflow is the variable; the implementation is the constant. ⚪
+Five failure modes with measured consequences.
 
-## Open Questions
+**"Make it good."** No DO, no DO NOT, no GLOSSARY. Fails identically to a raw prompt. Two consecutive deterministic failures in Experiment 2. Model capability doesn't matter; boundaries are load-bearing, and removing them collapses the structure. 🟢
 
-- At what task complexity does the scout→worker split stop paying for itself?
-- Can extraction quality be reliably measured, or does it require human judgment indefinitely?
-- Does multi-model verification scale to teams, or does it require centralized model access?
+**Code map as default context.** Experiment 1 run #5 (with codemap): $9.99, failure. Run #4 (same pipeline, no map): $6.63, first-try pass. The map added $3.36 and introduced a failure. Use maps for orientation. Remove them for implementation. 🟢
+
+**Self-review.** Agents rate their own broken code as excellent. A separate session with fresh context catches errors the implementation session misses, even with the same model. With a different model, coverage is better. Neither is optional; both are better than the same session reviewing itself. 🟢
+
+**Monster tasks.** 50+ files in one session don't get refactored. They get half-refactored, with the rest hallucinated. Decompose until each task has a verifiable output and a deterministic acceptance test. If you can't write the acceptance test, the task is still too large. 🟢⚪
+
+**Trust without verification.** Amazon's 6-hour outage (21K agents, 4 Sev-1 incidents in 90 days) traced to velocity scaling faster than verification. 🟠 LinearB measured the baseline risk across 8.1M PRs: AI-generated code receives 1.7× more review revisions than human code. 🟡 Verification isn't process overhead. It's what keeps scale from compounding errors.
+
+## Where we go beyond CC
+
+Claude Code answers "how to build an agent system." These principles answer a different question: how to use one effectively. The two aren't in conflict, but they're not the same conversation.
+
+| Dimension | Claude Code | Our contribution |
+|---|---|---|
+| Framework name | LMP implicit (`skillImprovement.ts`, `extractMemories`) | Named, 3 layers defined, empirically tested |
+| Process design | Coordinator mode. One built-in pattern | A/B tested 5 configurations, proved Process > Context |
+| Exploration vs exploitation | Structural (agent types with different tool permissions) | Explicit principle, portable across tools and providers |
+| KB as working memory | Observations about user and project | Structured research that changes how the agent reasons |
+| Multi-model review | Anthropic-only | Cross-model review (GPT reviewing Claude) as explicit pattern |
+| Multi-provider | Anthropic API only | Principles generalize to Gemini, GPT, Ollama |
+
+CC's production engineering is solid. But production-proven isn't optimal. Memory consolidation prunes by file size and line count rather than by relevance or quality. A different design choice than our bullet system with scored retrieval. Hooks exist but mostly handle permissions, not quality gates. There's no formalized guidance on when to use coordinator mode vs fork vs a clean agent spawn. That meta-layer is where these principles live. 🟡⚪
+
+The honest summary: use CC (or any capable agent tool) for execution. Use these principles to design the process around it.
+
+## Open questions
+
+**Automated degradation detection.** The April 2026 Opus incident showed silent provider-side quality changes: thinking depth dropped 67%, costs spiked 80×, stop-hook violations went from 0 to 173. All while the same CLAUDE.md was in context. We have `trajectory.py` and the relevant metrics (read:edit ratio, thinking depth, retry count). What doesn't exist: automated alerting when metrics cross thresholds, so degradation gets caught in real time rather than discovered after it damages output. This blocks shipping a reliable pipeline in production without manual monitoring. 🟢
+
+**Layer 2 intent language.** The principles above express WHAT and WHY in natural language. The next layer is machine-verifiable intent. Not "don't modify classifyTicket" as a text rule, but as an executable check that confirms compliance post-task. ContextCov (U Washington, Feb 2026) turns passive AGENTS.md into active executable checks; IntentLang formalizes intent as 7 structured elements with an XML intermediate representation. The external theory is mapped. Our own implementation doesn't exist yet. This blocks fully closing the loop described in [Self-Improvement](./self-improvement.md). 🟡

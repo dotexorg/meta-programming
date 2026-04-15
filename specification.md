@@ -1,117 +1,97 @@
 # Specification: Telling the Agent What You Mean
 
-Without a spec, an agent is just a raw prompt with better marketing. This page covers the minimum viable contract that makes an agent predictable — from three-line AGENTS.md files to full spec-driven development pipelines.
+A spec is a contract, not a description. This page covers what makes that contract work: from the three lines that prevent most failures to the full spectrum of spec-driven development, and what the industry has converged on as the baseline.
 
-## Why Boundaries Aren't Optional
+## Why boundaries aren't optional
 
-An agent without explicit scope boundaries fails in a specific, reproducible way: it does too much, in the wrong direction, with high confidence. 🟢
+Removing scope boundaries from a task doesn't simplify it. It hands the agent a coin flip where both outcomes are wrong.
 
-In controlled ablation testing, the same task submitted twice without a pipeline produced two consecutive failures. Adding a spec with explicit boundaries — including a single `DO NOT modify classifyTicket` directive — resolved the task on the first attempt. The agent didn't need more intelligence. It needed a contract.
+We tested this directly. The same Telegram bot task (add a support reply feature) failed twice without a pipeline. 🟢 The first run corrupted an existing prompt handler. The second misunderstood "reply" entirely and built the wrong thing. Adding a spec with explicit constraints, including one directive (`DO NOT modify classifyTicket`), turned the third attempt into a first-pass success. The agent didn't need more capability. It needed a contract.
 
-This aligns with what Microsoft Research calls the *intent gap*: the semantic distance between what a developer means and what a program actually does. The gap isn't a model capability problem. It's a specification problem. Every ambiguous instruction is an invitation for the agent to guess, and agents are optimistically wrong.
+The failure mode has a name: the *intent gap*: the semantic distance between what a developer means and what the system does (Microsoft Research RiSE, Lahiri, Mar 2026). 🟡 It isn't a model quality problem. The model interprets ambiguity correctly; it just picks an interpretation. Every underspecified instruction is an invitation to guess, and agents guess with high confidence.
 
-[Principles](./principles.md) covers why Principle 2 (Boundaries Are Not Optional) sits at the foundation of everything else.
+Even a fast-path prompt with no boundaries fails identically to a raw prompt. Speed doesn't compensate for direction. [Principles](./principles.md) covers Principle 2 in full.
 
-## The Minimum Viable Spec
+## The minimum viable spec
 
-Three sections. That's it.
+Three sections. That's the entire entry price.
 
-**DO** — what the agent is allowed to build or modify. Scoped tightly. One cohesive feature per spec. If you can't state it in two sentences, you have two specs.
+**DO**: what the agent is allowed to build or change. Scoped tightly. One cohesive feature. If you need three sentences to describe it, you have two specs. Acceptance criteria go here: "Task is complete when all existing tests pass and the new endpoint responds within 200ms p95."
 
-**DO NOT** — what to leave alone. Named functions, files, modules, contracts. `DO NOT modify the public API surface of UserService`. Explicit prohibitions outperform vague guidance every time. 🟢
+**DO NOT**: named prohibitions. Files, functions, modules, contracts. `DO NOT modify the public API surface of UserService`. Explicit prohibitions consistently outperform vague guidance. 🟢 "Be careful with database migrations" produces no measurable behavior change. `DO NOT run migrations automatically` does.
 
-**GLOSSARY** — terms that mean different things in different contexts. "Ticket" in a support context is not "ticket" in a task-tracking context. Ambiguous terms inside a spec are bugs.
+**GLOSSARY**: terms that mean different things in different codebases. "Ticket" in a support system isn't "ticket" in a project tracker. Ambiguous terms inside a spec aren't ambiguous. They're latent bugs.
 
-This structure emerged directly from failure analysis. Prose instructions get skimmed. Contradictory priorities create thrash. Vague directives like "be careful" produce no behavior change whatsoever. A command is not a suggestion.
+This structure came from failure analysis, not theory. Prose instructions get skimmed under task pressure. Contradictory priorities create thrash. Vague directives produce nothing. The DO/DO NOT/GLOSSARY format is the minimum surface that eliminates the most common failure modes without requiring a full requirements document. 🟢
 
-Sizing matters too. Practical experience with BMAD-style quick-dev specs points to a 900–1600 token sweet spot per spec. 🟠 Below 900 tokens, ambiguity risk rises. Above 1600, context dilution sets in — the agent begins treating early constraints as background noise rather than active policy.
+Sizing matters. A 900–1600 token sweet spot applies to structured quick-dev specs. 🟠 Below 900, ambiguity risk rises. Above 1600, early constraints start behaving like background context. Technically present, actively deprioritized. A spec is a program. Treat it like one.
 
-A spec is a program. `DO`/`DO NOT` is a contract. The ticket *is* the prompt. Prompt engineering at the task level is operational policy design.
+## The intent formalization spectrum
 
-## The Intent Formalization Spectrum
-
-Intent formalization is the central unsolved problem in AI-assisted development (Microsoft Research RiSE). 🟡 The challenge isn't writing specs — it's validating them. There's no oracle except the developer.
+The central unsolved problem in AI-assisted development isn't writing specs. It's validating them without an oracle. The developer is the oracle. Most won't validate carefully. Microsoft Research named this the grand challenge of *Intent Formalization* (RiSE, Mar 2026). 🟡
 
 The spectrum runs from informal to formal:
 
-**Vibe coding** sits at one end. No spec. The developer describes a feeling and the agent interprets freely. Fast for exploration, unreliable for anything that needs to survive a second run.
+**Vibe coding**: no spec, agent interprets freely. Fast for throwaway exploration, unreliable for anything repeatable.
 
-**AGENTS.md** is the first structured layer. Commands, not prose. Organized by task type. Explicit completion criteria. This is where most teams should start.
+**AGENTS.md**: first structured layer. Commands organized by task type, explicit done criteria. Where most teams should start, and many should stay.
 
-**SDD (Spec-Driven Development)** goes further. Functional specs written before code, kept as living documents that evolve with the system. The spec is the source of truth; code is derived from it.
+**SDD (Spec-Driven Development)**: functional specs written before code, kept as living documents. The spec is the source of truth; code is derived from it.
 
-**DSL synthesis** is the far end. A domain-specific language designed so that correct code can be mechanically generated from a valid spec. Currently academic outside narrow domains, but the trajectory is clear.
+**DSL synthesis**: a domain-specific language from which correct code is mechanically generated. Currently academic outside narrow domains. The trajectory is clear; the tooling isn't there yet.
 
-Auto-generated context actually hurts: it reduced task success by 3%, while human-written boundaries improved it by 4% (ETH Zurich, Feb 2026). 🟡 LLM-generated specs create overly obedient agents that do a lot of plausible-looking busywork. The spec has to come from a human who understands intent.
+One result worth sitting with: auto-generated context reduced task success by 3%, while human-written boundaries improved it by 4% (ETH Zurich, Feb 2026, 138 tasks across 3 models). 🟡 LLMs writing their own constraints produces agents that do a lot of plausible-looking work in the wrong direction. Specs have to come from people who understand intent.
 
-Interactive test-driven formalization offers a middle path: the agent generates postconditions from natural language, then asks the developer to validate. "Remove duplicates" has at least two valid interpretations — the postcondition makes the agent commit to one before writing a line of code.
+Interactive test-driven formalization offers a practical middle path: the agent generates postconditions from natural language, the developer validates before any code runs. "Remove duplicates" has at least two distinct valid interpretations. The postcondition forces a commit to one of them upfront.
 
-## SDD Tools
+## SDD tools and Fowler's maturity levels
 
-The ecosystem has consolidated around three positions on the spectrum.
+Teams mature through three levels:
 
-**[spec-kit](https://github.com/spec-kit/spec-kit)** (79K★) targets spec-anchored development. Its thesis: "The lingua franca of development moves to a higher level, and code is the last-mile approach." Five commands — `constitution → specify → plan → tasks → implement` — coordinate over 20 specialized agents. The spec persists after the task and drives future evolution.
+**Spec-first**: spec written before coding, discarded after. The entry point. Even a 15-minute writing session before handoff changes the failure rate, because it forces the developer to confront ambiguity before the agent does. Kiro (AWS) targets this level explicitly: "Use Specs for complex features. Use Vibe for quick exploratory coding."
 
-**[Kiro](https://kiro.dev)** (AWS) targets spec-first development. The workflow is Requirements → Design → Tasks. It ships separate spec types for features and bugfixes. Kiro's own documentation is direct about positioning: "Use Specs when building complex features. Use Vibe when doing quick exploratory coding." The internal mandate at Amazon — 80% weekly usage across 21K agents — was driven by a hard lesson: 4 Sev-1 incidents in 90 days. 🟡 Velocity without verification is not velocity.
+**Spec-anchored**: spec kept after the task, living in the repo, governing future changes. Spec-kit (GitHub, 79K★) is built for this: five commands: `constitution → specify → plan → tasks → implement`, coordinating 20+ agents including Claude Code, Copilot, Cursor, and Gemini. 🟡 The spec travels with the codebase; every agent that touches it works from the same contract.
 
-**[Tessl](https://tessl.io)** targets spec-as-source. The developer only edits the spec; code is a generated artifact. This is the most ambitious position and the hardest to retrofit onto existing codebases.
+**Spec-as-source**: only the spec is authored by humans; code is a generated artifact. Tessl's target. The most ambitious position and the hardest to retrofit onto anything existing. Don't start here.
 
-These tools don't replace judgment — they enforce it. Spec review is cheaper than code review. In practice, spec review catches architecture problems before they compound: when an agent proposes a barrel re-export during spec review and you ask "what's that?", the agent can recognize it as an anti-pattern and remove it before a single file is touched. 🟢 That's a zero-cost correction. The same catch at PR review costs hours.
+Velocity scales faster than verification. That's the failure mode Kiro's internal mandate at Amazon made explicit: 80% weekly usage across 21,000 agents, 4 Sev-1 incidents in 90 days. 🟡 Spec-first development prevents building the wrong thing quickly. It doesn't guarantee the right thing was built correctly. That's a [Verification](./verification.md) problem.
 
-## AGENTS.md as Industry Standard
+Spec review is cheaper than code review. In practice: when an agent proposed a barrel re-export strategy during spec review, the developer asked what that was; the agent recognized it as an anti-pattern and removed it before touching a single file. 🟢 Zero-cost correction. The same catch at PR review costs hours of context reconstruction and broken test runs.
 
-AGENTS.md is now present in 60,000+ public repositories. 🟡 The Linux Foundation has adopted it as the coordination protocol, with Anthropic, Google, Microsoft, and OpenAI as Platinum members. It works across Claude Code, Codex, Cursor, GitHub Copilot, Amp, Windsurf, and Devin — the spec travels with the repository, not with the tool.
+## AGENTS.md as the coordination standard
 
-Implicit reviewer judgment can be systematically extracted and codified. Pydantic's team analyzed 4,668 pull request comments and distilled them into 150 explicit AGENTS.md rules. 🟡 Knowledge that lived in senior engineers' heads became a machine-readable contract. Every new contributor — human or agent — gets the same baseline.
+AGENTS.md is now in 60,000+ public repositories. 🟡 The Linux Foundation governs it as the cross-tool coordination protocol, with Anthropic, Google, Microsoft, and OpenAI as Platinum members. It works across Claude Code, Codex, Cursor, GitHub Copilot, Amp, Windsurf, and Devin. The spec travels with the repository, not the tool.
 
-This is the network effect that makes AGENTS.md worth investing in: one spec, written once, applied everywhere the code goes.
+Implicit reviewer judgment can be systematically codified. Pydantic analyzed 4,668 pull request comments and extracted 150 AGENTS.md rules. 🟡 Knowledge that lived in senior engineers' heads became a machine-readable contract. Every contributor (human or agent) starts with the same baseline. One spec, written once, applied wherever the code goes.
 
-## Constrained Natural Language
+Controlled testing across 10+ runs per pattern identifies what actually changes agent behavior: 🟠
 
-Constrained natural language has a 60-year history in programming — COBOL, SQL, Simula all occupy the space between free-form prose and formal code. LLMs may finally provide the compiler that makes it a first-class programming interface.
+What gets ignored: prose paragraphs, ambiguous directives like "be careful with migrations," contradictory priorities without explicit ordering, style guides without enforcement commands.
 
-The practical consequence is that AGENTS.md files should be written in constrained natural language, not prose. The difference:
+What works: exact commands (`ruff check --select D`), task-organized sections that separate coding from review from release, explicit done criteria with verifiable conditions ("task is complete when: all tests pass, no TypeScript errors, PR description includes migration notes"), numbered priorities when conflicts are likely.
 
-**Prose (fails):** "Please try to avoid making changes to files that aren't directly related to the task."
+One instruction that's consistently missing from AGENTS.md files: surface ambiguity. Agents in non-interactive mode resolve ambiguity silently by default. Task resolve rate drops from 48.8% to 28% without an explicit directive to ask (ICLR 2026, AMBIG-SWE). 🟡 "Ask when uncertain" is a behavioral requirement, not a social norm. Write it in.
 
-**Command (works):** "DO NOT modify files outside the `src/features/` directory unless the task explicitly names them."
+## Constrained natural language: commands, not prose
 
-Prose invites interpretation. Commands define behavior. An agent reading a command either executes it or violates it — there's no third state called "I think this probably means..." The constraint is the specification.
+The space between free-form prose and formal code has a 60-year history. COBOL, SQL, Simula all occupy it (Pavlyshyn, Jan 2026). 🟡 Each decade brought abstractions that made programming more cognitively accessible. LLMs may be the bridge that finally makes constrained natural language a first-class programming interface, acting as a compiler for structured intent.
 
-## What Actually Works in AGENTS.md
+The practical consequence: AGENTS.md should be written in commands, not prose. The difference is sharper than it sounds.
 
-Controlled testing (10+ runs per pattern) shows what works in AGENTS.md: 🟡
+**Prose:** "Please try to avoid making changes to files that aren't directly related to the task."
 
-**What fails:**
+**Command:** `DO NOT modify files outside src/features/ unless the task explicitly names them.`
 
-- Prose paragraphs — agents skim or skip them when under task pressure
-- Ambiguous directives — "be careful with database migrations" produces no measurable behavior change
-- Contradictory priorities — agents resolve conflicts unpredictably; they don't ask
+Prose invites interpretation. A command defines behavior. The agent either executes it or violates it. There's no third state called "I think this probably means." Ambiguity is a feature for human communication and a fatal flaw for executable systems.
 
-**What works:**
+This extends beyond AGENTS.md. [Layer 2 in the LMP framework](./index.md) is constrained natural language specific to your project: your stack, your patterns, your conventions. AGENTS.md is the generic version. A personal intent language is AGENTS.md that evolved from your corrections over time, specific enough that it can't be swapped into another team's codebase without rewriting half of it. 🟡
 
-- **Command-first** — exact invocations, not descriptions. `Run npm test -- --watch=false` not "make sure tests pass."
-- **Task-organized** — separate sections for coding, review, and release. An agent scoped to a coding task shouldn't have to parse release procedures to find its constraints.
-- **Closure-defined** — explicit done criteria. "Task is complete when: all tests pass, no TypeScript errors, PR description includes migration notes." Without a definition of done, agents optimize for looking finished rather than being finished.
+## Open questions
 
-Agents running in non-interactive mode default to resolving ambiguity silently. Without an explicit instruction to surface ambiguity, task resolution rates drop from 48.8% to 28% (ICLR 2026, AMBIG-SWE). 🟡 "Ask when uncertain" needs to be a named instruction, not an assumed behavior.
+**Spec validation without a practical oracle.** Interactive test-driven formalization works if developers validate generated postconditions. Most won't, not consistently. The open question: is there a minimal feedback loop that captures validation signal without requiring active developer discipline? Every current approach (postcondition generation, disambiguation prompts, test-first formalization) assumes the developer will engage at validation time. We haven't found a setup that doesn't.
 
-## Fowler's Three Maturity Levels
+**Spec decay.** A spec written at project start drifts from the implementation as features accumulate. Implementation outpaces the update cadence. No current tool detects the drift automatically. The mismatch surfaces only when a new agent reads a stale spec and builds for the wrong target. What triggers a spec update, and who owns that process, remains unresolved.
 
-Teams mature through three levels — from disposable specs to spec-as-source. Fowler's model maps the progression: 🟡
+**Cross-agent spec inheritance.** When a coordinator spawns worker agents, how much of the coordinator's spec should each worker inherit? Boundary constraints? Glossary only? Full DO/DO NOT? Currently each orchestrator decides independently, with no standard. An agent inheriting too little scope fails differently than one inheriting too much, but we don't have a principled model for where to draw the line.
 
-**Level 1 — Spec-first:** The spec is written before coding begins and used for the current task. Disposable after completion. This is the entry point. Even a 15-minute spec-writing session before handing off to an agent changes the failure rate.
-
-**Level 2 — Spec-anchored:** The spec is kept after the task, lives in the repository, and governs future changes. Evolution happens through spec changes that propagate to code. This is where spec-kit and most team workflows land.
-
-**Level 3 — Spec-as-source:** Developers only edit the spec. Code is a generated artifact that developers don't directly maintain. This requires either narrow domain scope (Tessl's target market) or extremely mature tooling. Don't start here.
-
-The progression maps directly to how an engineer's role changes. Spec-first is still mostly prompt engineering. Spec-anchored shifts the primary skill toward system modeling and spec writing. Spec-as-source makes the developer a spec author, with code review replaced by property verification. The title changes from "prompt engineer" to "spec-driven architect." ⚪
-
-## Open Questions
-
-- **Spec validation without an oracle.** Intent formalization works if developers validate generated postconditions — but most won't. What's the minimal validation loop that doesn't require developer discipline to work?
-- **Spec decay.** A spec written at project start drifts from implementation over time. What triggers a spec update? Who owns it?
-- **Cross-agent spec inheritance.** When Agent A spawns Agent B, how much of A's spec should B inherit? Currently implementation-defined by each orchestrator.
-
-*Next: [Pipeline](./pipeline.md) — how specs feed into execution. [Verification](./verification.md) — how spec violations surface at runtime. [Back to overview](./index.md).*
+*See also: [Pipeline](./pipeline.md) (how specs feed into execution), [Verification](./verification.md) (how spec violations surface at runtime. [Principles](./principles.md), Principle 2 in full.*

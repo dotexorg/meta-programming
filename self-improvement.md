@@ -1,129 +1,133 @@
-# Self-Improvement
+# Self-improvement: agents that get better without fine-tuning
 
-Agents that improve through language — updating rules, extracting lessons, and pruning bad memories — without touching model weights. This is the operational core of meta-programming.
+Fine-tuning costs weeks and tens of thousands of dollars per cycle. Linguistic self-improvement costs a dollar. This is the closed loop at the core of meta-programming: rules extracted from session failures, lessons promoted to permanent conventions, memories consolidated across months of work. All in natural language, without changing a single weight.
 
-## Why Language, Not Weights
+## Why language beats fine-tuning
 
-Fine-tuning is expensive, slow, and opaque. A model that rewrites its own instructions improves on the timescale of a session, costs the price of a few inference calls, and leaves an auditable trace in plain text files.
+Fine-tuning captures behavioral shifts durably. It also produces changes opaque to inspection, requires labeled failure data at scale, and runs weeks behind the feedback it addresses. Most agent behaviors worth fixing don't clear that bar. They're one-session discoveries: a naming convention preference, a do-not-touch boundary, a specific error pattern in async middleware.
 
-The difference is not theoretical. 🟢 In three controlled A/B tests, an 8KB structured knowledge base transformed agent behavior from conventional wisdom to evidence-based reasoning. Without the KB, a generic agent recommended giving code maps to agents ("yes, code map is useful, detailed specs are better"). With the KB, the same model contradicted that advice with specific evidence from prior experiments. On a production task, the agent without KB proposed a technical migration; the agent with KB proposed an architectural redesign. The difference was not code quality — it was thinking level. Accumulated linguistic knowledge changed what the agent tried, not just how it executed.
+The question isn't whether the linguistic approach can replace fine-tuning for large-scale behavioral shifts (it can't). The question is whether it handles the 90% of cases that aren't large-scale shifts. A rule update takes effect immediately at the cost of a dollar. That's the comparison.
 
-The pattern holds beyond our experiments. Implicit judgment can be made explicit at scale: 4,668 PR review comments became 150 behavioral rules the agent can load and follow (Pydantic, open source). 🟡 Three independent skill self-improvement projects shipped in the same week — `skill-loop`, `selfwrite`, and `iterate` — each arriving at the same closed-loop architecture without coordination. 🟠 When practitioners independently converge on a pattern, the pattern is real.
+The behavioral difference is measurable. 🟢 In three controlled A/B tests, loading an 8KB knowledge base changed not what the agent executed but what it *tried*. Without the KB, a Sonnet model answered "yes, code maps improve orientation". The conventional-wisdom answer. With the KB loaded, the same model flagged the exploration-exploitation tradeoff, citing a specific experiment where a code map increased cost by 51% and caused the run to fail. On a production refactor the gap was starker: KB-less agent proposed a technical migration ("replace JSON parsing"); KB agent proposed an architectural redesign: three-type router with tool-calling. The KB didn't grant new capabilities. It changed the reference frame.
 
-Four distinct types of self-improvement exist: self-reflection, self-generated data, self-adapting models, and self-improving code agents (NeurIPS 2025 taxonomy). 🟡 The architecture described on this page combines type 1 (reflection via reviewer feedback) with elements of type 4 (lesson-extractor updating rules).
+Four types of self-improvement exist in current AI research: self-reflection, self-generated data, self-adapting models, and self-improving code agents (NeurIPS 2025 taxonomy). 🟡 The patterns on this page combine type 1 (reflection through reviewer feedback) with type 4 (rule updates from session experience). No weights change at any stage.
 
-## Our Closed Loop
+## Five levels of memory
 
-The pipeline's final stage — lesson extraction — closes the feedback loop. After each feature, a dedicated agent reviews what broke, what was unexpectedly hard, and what assumption was wrong. The output is atomic, generalizable rules saved to the knowledge base. 🟢
+Claude Code operates five concurrent memory systems with different scopes and time horizons. 🟡 No level replaces another. Each serves a different TTL and granularity.
 
-In practice: after a 24-file refactoring pipeline (Experiment 3), the lesson-extractor produced two patterns — "grep for barrel imports when moving types" and "check wildcard re-export conflicts when splitting shared modules." Both were the exact failure categories that caused the reviewer to fail three times before passing. 🟢 Those patterns now load into future pipeline runs, preventing the same class of error from recurring.
+| Level | What | Scope | Automated? |
+|-------|------|-------|-----------|
+| L1 | Static rules, always loaded | Permanent | Manual (CLAUDE.md) |
+| L2 | Path-scoped rules (`paths:` frontmatter) | Permanent, scoped | Manual (.claude/rules/) |
+| L3 | Cross-session facts, derivability-filtered | Days to weeks | Auto (extractMemories) |
+| L4 | Within-session structured notes | One session | Auto (Session Memory) |
+| L5 | Periodic consolidation | → L3 | Auto (autoDream) |
 
-The loop:
+All five background processes fire at startup and run fire-and-forget off the main thread: `initMagicDocs + initSkillImprovement + initExtractMemories + initAutoDream + autoUpdateMarketplacesAndPlugins`. None block the conversation.
 
-```
-Agent → action → tests
-  IF fail:
-    extract error + lesson → save to episodic store
-    next attempt loads relevant episodes
-  IF 3+ same error:
-    synthesize permanent rule → add to L1/L2
-  IF rule applied but task still fails:
-    decrement rule score
-    IF score < threshold → demote or delete
-```
+### L3: extractMemories
 
-The verification signals — test results, linter output, user corrections — are what make extraction possible. Without reliable feedback, the agent extracts from noise. And even with reliable feedback, extraction can go wrong: a lesson that was correct for one context may be overfitted to that specific task. If the lesson "always use barrel re-exports" is extracted from a case where barrels happened to work, it becomes a landmine in a project where barrels cause circular dependencies. Demotion scoring (see Memory Scoring below) is the defense — lessons that hurt on application lose score and eventually get pruned. [See Verification](./verification.md) for why feedback infrastructure determines the self-improvement ceiling.
+After each session, a forked agent reads the conversation history and writes structured facts into four buckets. 🟡 *User*: role, goals, preferences. *Feedback*: corrections and confirmations. *Project*: ongoing work state. *Reference*: pointers to external systems.
 
-## Memory Hierarchy
+A derivability test filters noise. Any fact re-derivable from the codebase itself doesn't need storage. Git history is authoritative for "we added a payment module." Only experience-dependent knowledge passes through: the developer's preference for flat error handling, the team convention that broke in production, the specific sequence that causes CI to time out.
 
-Five levels of persistent context exist, each with a different scope and promotion threshold. 🟢 The table below uses Claude Code's implementation as the reference — it is the most fully documented production agent architecture — but the pattern generalizes. Any agent with file-based rules, scoped overrides, cross-session extraction, within-session notes, and periodic consolidation follows the same hierarchy, regardless of what the files are called.
+Confirmations count as signal alongside corrections. 🟡 The quiet "yes, exactly" that accepts an unusual approach carries the same evidential weight as explicit pushback. Recording only failures biases the agent away from validated approaches it might otherwise abandon on a future task.
 
-| Level | What it does | Example (Claude Code) |
-|---|---|---|
-| L1 | Static rules, always loaded | `CLAUDE.md` (or `AGENTS.md`, project config) |
-| L2 | Path-scoped overrides | `.claude/rules/` with glob patterns |
-| L3 | Cross-session facts, derivability-filtered | `extractMemories` — 4 types |
-| L4 | Within-session structured notes | Session Memory — 9 sections |
-| L5 | Periodic consolidation and pruning | `autoDream` — triggers at 24h + 5 sessions |
+The fork shares the main conversation's prompt cache. Extraction is cheap by design.
 
-L3 is the critical layer. The derivability test asks: *can this fact be derived from the codebase itself?* If yes, it doesn't need to be remembered — it can be re-derived on demand. Only facts that require experience (preferences, patterns, past decisions) pass through. L5 consolidation prevents memory bloat: older session notes are merged and compressed before they accumulate into noise.
+### L4: session memory and compact protection
 
-We operate at L1 today, with our KB serving as a manual L3. The gap between these levels — L2 path-scoped rules, automated L3 extraction, L4 session memory, L5 consolidation — is the implementation roadmap. [See Pipeline](./pipeline.md) for how worker isolation maps to context reset at each level.
+Session Memory tracks nine sections across a long conversation: Current State (marked CRITICAL), task spec, files in scope, workflow, errors and corrections, codebase docs, learnings, and a worklog. 🟡 It triggers at 10K tokens with at least three tool calls, or when the session grows 5K tokens without a tool call. Budget: 12,000 tokens total, 2,000 per section.
 
-Two always-loaded files — not five levels — can be enough to close the most expensive gap. 🟢 After forgetting the same workflow five times in a single session, we reduced the architecture to `persona.md` (~1KB, rewritten each wrap by the current model) and `rules.md` (~500 tokens, manually edited, never touched by automation). The session journal was eliminated: platform-native JSONL session history already captures what the journal duplicated. Each `/wrap` rewrites `persona.md` from scratch — ~15 bullets, medium detail, current decisions and next steps — while `rules.md` holds sticky workflow conventions and key paths that shouldn't drift session to session. Mapped to the CC hierarchy: `rules.md` ≈ L1 (stable behavioral constraints), `persona.md` ≈ L3 (session-derived facts), platform session files ≈ L4. The design rule: automate only the levels where imprecision is recoverable.
+Compaction is not memory loss. Three mechanisms protect state: Session Memory injects its summary into the compact transcript, all user messages survive verbatim, and a microcompact pass cleans only tool results (triggers at 180K tokens, keeps 40K). 🟡 A `PreCompact` hook is the explicit save point. Critical pipeline state written there survives any compaction. Adding `NO_TOOLS_PREAMBLE` as the first line prevents tool calls during the compact itself.
 
-## Extraction ≠ Promotion
+### L5: autoDream
 
-Not every observed fact deserves permanent storage. Promotion thresholds should scale with storage permanence.
+Every 24 hours (after at least five sessions) a forked read-only agent runs consolidation. 🟡 Four phases: Orient (read MEMORY.md), Gather (recent logs plus drifted memories), Consolidate (merge entries, convert relative dates to absolute), Prune (enforce < 200 lines and < 25KB). A file-based mutex with PID ownership prevents concurrent runs.
 
-We encode this principle in our evidence hierarchy: 🟢 experiments we ran ourselves (🟢) carry more weight than trusted external sources (🟡), which carry more weight than community claims (🟠). The same asymmetry applies to agent memory — a pattern observed in three of our pipeline runs is a stronger candidate for promotion than a technique mentioned in a paper we haven't tested. This isn't bias; it's calibration. The agent that promoted everything equally would drown in noise.
+The pruning criterion is size, not value. That's a gap. Entries removed by line count may carry more signal than entries retained by recency. Score-based pruning (which the ACE framework addresses) is a more principled approach. [See memory scoring below.](#memory-scoring)
 
-Extraction quality correlates directly with base model capability. 🟡 Weaker models can extract per-session facts reliably — what happened, what failed, what was decided. They fail at cross-task generalization: identifying that a failure in one domain implies a rule applicable to a different domain. Claude Code's implementation reflects this: `extractMemories` uses the current model, while `/insights` (cross-session synthesis) routes explicitly to Opus.
+## skillImprovement: rules from corrections
 
-Learned heuristics outperform few-shot prompting once the agent has accumulated enough experience. 🟡 In controlled trials, heuristic-guided agents scored +7.8% over ReAct baselines (ERL, Mar 2026) — suggesting that self-improvement compounds past a threshold rather than degrading as rules accumulate. This is the empirical argument for investing in a proper extraction pipeline: the returns are non-linear.
+Every five user messages, a background hook scans the recent conversation for behavioral corrections. 🟡 Requests to add or remove steps, preferences about how things should work, explicit pushback. These are the signals. When corrections are found, it proposes a `SkillUpdate[]` with the section to change, what to change, and why, then calls an LLM to rewrite the active SKILL.md in-place.
 
-The practical principle: use cheap extraction liberally within sessions, use strong extraction conservatively across sessions. Demote as aggressively as you promote — memories that fail on application should lose score. [See Principles](./principles.md) for Principle 6 on this tradeoff.
+The scope is narrow by design: only the currently active skill, only messages since the last check. The rewrite is surgical. Not a full regeneration, but targeted updates to sections that received corrections.
 
-## Automatic Rule Updates from User Corrections
+The gap is symmetric. Silent failures pass through unnoticed. The hook only captures explicit corrections. A verification stage that surfaces failures the user never flagged closes this gap. [See Verification](./verification.md).
 
-Behavioral rules can be updated automatically from user corrections, with no external infrastructure required. 🟢 In Claude Code, a background hook runs after every five messages and checks whether the user corrected the agent's behavior during that window. If corrections are found, it rewrites the skill file to reflect what the agent should have done. The mechanism is platform-specific; the principle — observe corrections, update rules, apply next time — is universal.
+A companion mechanism (the Remember skill) periodically reviews auto-extracted memories and proposes promotions to permanent rules. 🟡 Destination options: CLAUDE.md (project conventions), CLAUDE.local.md (personal preferences), team memory (cross-repo shared), or auto-memory (keep ephemeral). All proposals are presented before any changes apply.
 
-This is a minimal closed loop: behavior → correction → rule update → next invocation uses updated rule. The limitation is that it only captures explicit user corrections — silent failures pass through unnoticed. Pair it with a verification stage that surfaces failures the user didn't explicitly flag [see Verification](./verification.md).
+### Magic Docs: knowledge that updates itself
 
-## The ExpeL Framework
+Any markdown file prefixed with `# MAGIC DOC: [title]` rewrites itself after being read. 🟡 A background forked subagent updates information in-place. Not as a changelog appended to the bottom, but editing content where it lives. Italic text after the header provides custom instructions: what to prioritize, what to preserve, how aggressively to update.
 
-The self-improvement loop can be formalized into three stages: experience gathering, insight extraction, and task inference. 🟡 Validation on HotpotQA and ALFWorld shows the approach compounds — performance improves as the insight library grows.
+The pattern extends beyond agent preferences. A project architecture doc that refreshes each time the scout reads it. A dependency map that adjusts when packages change. A test coverage summary that updates after each run. The implementation is a fork of a cheap model and a single header convention. The result is documentation that ages more slowly because it self-corrects.
 
-**Stage 1 — Experience Gathering:** the agent solves tasks and saves full trajectories, including failed attempts. Failures are as valuable as successes because they carry error signals.
+## ExpeL: gather → extract → apply
 
-**Stage 2 — Insight Extraction:** an LLM pass over the trajectory batch extracts generalizable rules. The extraction prompt asks: *what patterns across these attempts predict success or failure?*
+The closed-loop pattern was formalized in ExpeL (Andrew Zhao et al., 2023). 🟡 Three stages.
 
-**Stage 3 — Task Inference:** future tasks load both the extracted insights and relevant past trajectories as few-shot context.
+**Gather.** The agent solves tasks and saves full trajectories, including failed attempts. A trajectory with three wrong approaches before a correct solution carries information a clean success doesn't: what the agent tried, what broke, why the final approach worked.
 
-Our lesson-extractor is a production adaptation of this pattern. 🟢 The gap between the research framework (short, clean trajectories on QA benchmarks) and production coding (long, messy sessions with file edits and test runs) is real — but the three-stage structure holds. We gather experience through pipeline runs, extract lessons through a dedicated post-merge agent, and load relevant lessons into future workers.
+**Extract.** An LLM pass over trajectory batches finds patterns: approaches that consistently fail, approaches that succeed, failure modes repeating across different task types. Output is natural-language rules. Not code, not embeddings. Text the agent reasons about directly.
 
-## Practitioner Patterns
+**Apply.** Future task runs load extracted insights and relevant past trajectories as few-shot context. The insight library grows with each run.
 
-Three patterns emerge from real-world deployments — including our own:
+Performance compounds as the library grows, not degrades. 🟡 On HotpotQA and ALFWorld, ExpeL agents improve with each batch of trajectories. The gain comes from pattern recognition across tasks. Not single-task reflection, which saturates quickly.
 
-**Error-driven rules.** After each pipeline run, extract structured failure data: what happened, why, what should have happened. Count patterns across runs. At 3+ occurrences, synthesize a behavioral rule and promote it. 🟢 Our lesson-extractor follows this pattern — the two rules from Experiment 3 (barrel imports, wildcard conflicts) emerged from exactly this process. A separate practitioner deployment reports 13 active rules generated from 211 indexed memories after two weeks, with learned rules carrying more weight than static instructions because the agent treats them as empirically validated. 🟡
+Our pipeline implements a production adaptation. 🟢 After each feature merge, a dedicated lesson-extractor reviews what broke, what was unexpectedly hard, and what assumption was wrong. After the 24-file type refactoring in Experiment 3, the extractor produced two rules: "grep for barrel imports when moving types" and "check wildcard re-export conflicts when splitting shared modules." Both matched exactly the failure categories that caused the reviewer to fail three times before passing. Those rules now load into future pipeline runs automatically. [Full pipeline details](./pipeline.md).
 
-**Structured wrap-up.** The extraction moment, not the session itself, is what creates persistent improvement. 🟡 A four-phase end-of-session routine enforces it: Ship (commit and push) → Remember (review session lessons, promote to memory) → Review (flag mistakes worth extracting) → Publish. Without a deliberate extraction step, lessons evaporate with session context.
+## Extraction ≠ promotion
 
-**Four-file memory split.** Separating lessons, errors, decisions, and todos by file prevents category pollution and enables targeted drift detection. 🟡 After each edit, a drift-detection pass checks for content inconsistent with the current state. Over 100 sessions on a production Java codebase: by session 20 the agent knows your patterns; by session 50, the codebase better than fresh context. Errors are never repeated.
+Knowing what happened this session is not the same as knowing what generalizes across sessions. These are different jobs that require different model quality. Running them with the same model is a false economy.
 
-**Self-patching skills.** Skills can rewrite their own failing steps from recorded failure data, without a human editing them. 🟡 The `/evolve` command in Claude Recall analyzes which steps produced errors across past sessions and rewrites those steps in-place. This closes a gap in the CC `skillImprovement.ts` pattern: the post-sampling hook only fires when a skill is currently active. Retrospective `/evolve` runs against any skill with a failure history, regardless of when it last ran.
+Per-session extraction (what failed, what was decided, what needs to be remembered) is cheap. A Haiku-class model handles it reliably. Cross-session synthesis (recognizing that a failure in authentication implies a rule applicable to async middleware generally) is expensive. It requires the strongest model available. 🟡 Claude Code makes this concrete: `extractMemories` runs on whatever model is currently active; `/insights`, which analyzes all sessions and generates `claude_md_additions`, routes explicitly to Opus.
 
-**Debugging-loop RAG.** Persistent memory wired into the debugging loop — not just planning — compounds quality as the codebase ages. 🟡 One production deployment captures each resolved bug as a retrieval entry: the next time a similar failure appears, the relevant fix surfaces automatically. No manual curation step; the debugging history is the training set.
+The `/insights` command surfaces repetition across the full history. 🟡 An instruction appearing in two or more sessions is a "PRIME candidate" for promotion to CLAUDE.md. Friction patterns (misunderstood requests, wrong approaches, rejected actions, excessive changes) accumulate into behavioral signals that no single session can surface alone.
 
-## Self-Improving Tools
+Cheap promotion produces rule pollution. A weaker model extracting cross-session generalizations makes plausible mistakes: rules that hold in one context, fail in adjacent ones, and accumulate without demotion. The defense is aggressive demotion — rules with sub-50% success over ten applications should be removed, not just deprioritized.
 
-Three tools implement self-improvement as a first-class concern:
+Extract liberally within sessions. Promote conservatively across sessions. Demote as aggressively as you promote.
 
-**skill-loop:** A tool that runs a four-stage loop against any skill file — observe → inspect → amend → evaluate. 🟠 It exposes the loop as a programmatic interface (via MCP, the emerging standard for tool integration), so improvement can be triggered automatically, not just by end-of-session hooks.
+This is [Principle 6](./principles.md). The one principle that touches all the others, because without the feedback loop, none of the others compound.
 
-**Stanford Meta-Harness** automates the harness itself, not just the agent. Rather than manually tuning the evaluation loop, it treats harness configuration as an optimization target. 🟡 A 6x performance gap between optimized and unoptimized harnesses on the same agent confirms that self-improvement infrastructure matters as much as the agent itself.
+## Practitioner patterns
 
-**DSPy** treats prompts as learnable parameters. Optimizers like BootstrapFewShot, MIPROv2, and GEPA search over prompt variants given a training set and scoring function. 🟡 When the underlying model changes, you recompile rather than manually re-engineer prompts. This is the closest existing implementation to automated cross-session memory management — the prompt *is* the extracted knowledge, and the optimizer is the extractor.
+Self-improvement moved from research into production across 2025-2026. Three deployments show what the pattern looks like at different scales and from different angles.
 
-For a full catalog of tools in this space, [see Landscape](./landscape.md).
+**Structured error logging.** Rory Teehan's system captures three fields per error: what happened, why it happened, what should have happened instead. When the same pattern appears three or more times, a rule synthesizes and promotes automatically. 🟡 After two weeks: 13 error patterns became 13 active rules, backed by 211 indexed memories. The notable observation: learned rules carry more weight than initial static instructions. They're treated as empirically validated rather than author-asserted.
 
-## Memory Scoring
+**Extraction as end-of-session discipline.** A four-phase wrap-up skill enforces the extraction step that's easiest to skip. 🟡 Ship (commit and push) → Remember (review lessons, promote to memory) → Review (flag mistakes worth extracting) → Publish. The extraction moment (not the session itself) creates persistent improvement. Without a deliberate end-of-session step, lessons evaporate with context. The practitioner reports running this without exception every single session.
 
-Memory becomes self-correcting when every unit of knowledge carries a score that updates on use. Our KB implements this through `helpful` and `harmful` feedback on individual bullets — a pattern formalized in the ACE framework (Agentic Context Engineering). 🟢
+**Four-file memory with drift detection.** Separating lessons, errors, decisions, and todos into distinct files prevents category pollution. 🟡 Across 100 sessions on a production Java codebase: by session 20 the agent knows your coding patterns; by session 50, it knows the codebase better than a new hire would. The `/evolve` command patches a gap in `skillImprovement.ts`. Instead of requiring the skill to be currently active, it runs retrospectively against any skill with recorded failures.
 
-The scoring formula is simple: `effectiveness = (helpful - harmful) / (total + 1)`. The +1 (Laplace smoothing) prevents noise from single votes on new entries. Bullets that consistently help rise in retrieval priority; bullets that mislead fall and are eventually pruned.
+## Self-improving tools
 
-Individual episodes carry an effectiveness score updated on each use: +0.3 on success, −0.5 on failure. 🟡 The asymmetric weighting is deliberate — a single misleading memory can cascade into multiple wrong decisions, so the penalty must exceed the reward. Score below 0.3 triggers deprioritization.
+**pi-autoresearch** (2,288 stars) implements Karpathy's autonomous research loop as a Pi extension. 🟠 The pattern: run an experiment, feed results to the next run, iterate without human intervention per cycle. The chess example: starting at expert ELO, reaching top-50 grandmaster through 70+ sequential autonomous experiments.
 
-Episodic reflections can accumulate into a higher-order policy layer. Meta-Policy Reflexion builds predicate-style rules with confidence weights. 🟡 Two enforcement modes: SOFT biases token probabilities toward rule-consistent actions; HARD blocks actions that violate active rules outright. Hard blocking outperforms soft-only enforcement — preventing rule violations that soft biasing merely discourages.
+**chudi.dev's self-improving RAG** wires persistent memory into the debugging loop, not just planning. 🟡 Each resolved bug becomes a retrieval entry; when a similar failure appears later, the fix surfaces automatically. The debugging history functions as the training set, growing continuously without a separate curation step.
 
-Production deployments show the pattern works at scale with simple stacks. Output quality saturates at roughly seven governed memories per entity — adding more provides no measurable benefit. 🟡 This ceiling emerged from multi-agent research (Personize.ai, 2026): 99.6% fact recall, 50% token reduction from progressive delivery, zero cross-entity leakage on 500 adversarial queries. A separate deployment across 232 tasks with zero failures used four components: an extraction daemon polling logs, Haiku extracting facts, a markdown vault with vector search, and an injection hook surfacing the top-2 relevant entries per prompt. 🟡 The complexity ceiling is low — returns come from the feedback loop, not the infrastructure.
+**skill-loop** runs a four-stage programmatic cycle against any skill file: observe → inspect → amend → evaluate. 🟠 Exposed via MCP, so improvement can trigger automatically on any event rather than waiting for session end.
 
-## Open Questions
+Three independent self-improvement projects (`skill-loop`, `selfwrite`, and a third loop-based tool) shipped in the same week in March 2026 without coordination. 🟠 Each arrived at the same closed-loop architecture independently. That convergence is its own data point.
 
-- **Extraction timing:** end-of-session batch vs. inline after each tool call. Inline catches more signal but adds latency to every step.
-- **Rule conflict resolution:** when two promoted rules contradict each other, which wins? Current implementations use recency; confidence weighting is unexplored in practice.
-- **Cross-agent sharing:** rules extracted by one agent instance — are they transferable to another agent on the same codebase? No published evidence yet.
-- **Extraction under adversarial input:** a user who deliberately provides incorrect corrections could poison the skill file. No defense mechanism exists in current implementations.
-- **KB scaling:** At ~935 bullets, retrieval quality is partially addressed. A search v2 implementation — threshold-based filtering, relevance scoring, and a top-15 cap — reduced broad-query noise from 214 results to 5 actionable hits. 🟢 Narrow queries now work reliably; the tier files and progressive disclosure handle broad exploration. The remaining gap is cross-bullet linking: related findings stored under different tags don't surface together unless the query happens to match both. At the current scale this is manageable; at 1,500+ bullets it will require graph-based retrieval or explicit cross-references.
+## Memory scoring
+
+Memory becomes self-correcting when each unit carries a score that updates on use. The ACE framework (Agentic Context Engineering) formalizes this with hybrid retrieval: embedding similarity plus effectiveness score plus freshness determines what surfaces. Not just recency or keyword match. 🟡 Grow-and-refine cycles apply semantic dedup (cosine ≥ 0.85 = likely duplicate), prune negative-score entries, and enforce section size limits.
+
+Our KB implements a simplified version. 🟢 Each bullet accepts helpful/harmful feedback, retrieval priority tracks effectiveness, and `research_refine` prunes entries with persistently negative scores. Episode weights are asymmetric: +0.3 on success, −0.5 on failure. One misleading memory can cascade into multiple wrong decisions. The penalty exceeds the reward deliberately.
+
+Output quality saturates at roughly seven governed memories per entity. 🟡 Adding more provides no measurable benefit, confirmed across 500 adversarial queries with 99.6% fact recall, 50% token reduction from progressive delivery, and zero cross-entity leakage. The ceiling is low. Returns come from the feedback loop and scoring quality, not from storing more entries.
+
+A separate production deployment ran 232 tasks with zero failures using four components: extraction daemon polling logs, Haiku extracting facts, a markdown vault with vector search, and an injection hook surfacing the top-2 relevant entries per prompt. 🟡 Simple infrastructure. Working loop.
+
+## Open questions
+
+**Extraction timing.** We run extraction at session end in batch. Inline extraction after each tool call would capture silent failures that resolve before the user notices. The signal exists but never gets logged. The tradeoff: latency on every tool call, plus a live-context extraction prompt rather than a session summary. No measurement exists for signal gain vs latency cost. The breakeven point is unknown.
+
+**Rule conflict resolution.** Two promoted rules can contradict each other for the same situation. Current implementations default to recency. Newer rule wins. Confidence-weighted resolution is conceptually clear: a rule with 90% success over 30 applications should beat a newer rule with three. The unsolved case is two rules with equal confidence and opposite recommendations. No implementation handles this reliably.
+
+**Cross-agent rule transfer.** Rules extracted by one agent instance. Do they transfer to a second agent on the same codebase without encoding agent-specific context artifacts? The file format is portable; whether the generalizations hold is unknown. No published transfer success rates exist.
+
+**Automatic promotion outside Claude Code.** The `/insights` mechanism is readable in CC source: Opus model, cross-session aggregation, frequency threshold of 2+ sessions as the PRIME candidate signal. Replicating it independently requires session history in a compatible format and a coordination mechanism to prevent duplicate promotions across concurrent sessions. The threshold is clear. The plumbing (for tools other than CC) is not.

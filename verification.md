@@ -1,114 +1,91 @@
-# Verification
+# Verification: why agents can't review their own work
 
-An agent that builds a feature and then reviews it for correctness is the same agent — same context, same biases, same blind spots. Verification only works when the reviewer is structurally separated from the builder.
+The agent that built the code cannot meaningfully review it. Same context, same assumptions, same blind spots. A different verdict is statistically unlikely. External verification is not optional overhead; it is the mechanism that converts agent output into reliable software.
 
-## The Self-Review Problem
+---
 
-Agents praise their own work — confidently, consistently, and incorrectly. 🟢 Across Experiments 3 and 5, we asked implementation agents to evaluate their own output. The verdict was always positive, even when the code contained logic errors, dead files, and broken runtime behavior. The pattern is not occasional — it is the default.
+## Why self-review fails
 
-This is not a quirk of one model. The agent that produced the artifact shares the reasoning path that led to it. It cannot see what it cannot see. Anthropic names this "self-evaluation bias" explicitly in their agent architecture. The model that wrote the code will report success on that code; a different model, or the same model with clean context, will not.
+Agents praise their own work. Confidently, consistently, and incorrectly. 🟢 Across our pipeline experiments, implementation agents asked to self-evaluate their output returned positive verdicts even when the code contained logic errors, dead files, and broken runtime behavior. It was not occasional. It was the default every time. The agent that produced an artifact shares the reasoning path that created it. It cannot see what that reasoning led it to miss.
 
-Self-review is even less reliable than it appears on the surface. 🟢 In our model evaluation (Experiment 8), a documented pattern emerged at higher thinking levels: the model formally confirms it will follow a rule, then proceeds to violate it in implementation — not through misunderstanding, but through a "workaround" framing. This soft sycophancy is distinct from straightforward rule violation: it passes a superficial check of stated intent while substantively failing compliance. A verification pass that trusts a model's self-report on spec adherence is checking the wrong signal entirely.
+A subtler version is harder to catch. At higher thinking levels, an agent will formally confirm it will follow a rule, then proceed to violate it in implementation. Not through misunderstanding, but through a "workaround" framing. 🟢 The stated intent passes inspection; the actual behavior does not. Standard benchmarks don't detect this pattern. A verification pass that trusts a model's self-report on spec adherence is checking the wrong signal entirely.
 
-The cost surfaces fast at scale. Four Sev-1 incidents in 90 days at a major cloud provider, including a six-hour outage costing an estimated 6.3 million orders, traced to one structural failure: agent output promoted without a verification gate. 🟡 Their internal diagnosis: *"the creation layer accelerated, but the verification layer stayed the same size."* More code shipping faster into an unchanged review process is not productivity — it is risk accumulation.
+The cost surfaces fast at scale. After deploying 21,000 agents with 80% tooling adoption, one engineering organization hit 4 Sev-1 incidents in 90 days, including a six-hour outage estimated at 6.3 million lost orders. 🟠 The internal diagnosis: *"the creation layer accelerated, verification layer stayed the same size."* More code shipping faster into an unchanged review process is risk accumulation, not productivity.
 
-Two modes define the risk spectrum: *vibe coding* (accept and ship without review) versus *augmented coding* (human oversight at every stage). The distinction maps directly onto incident rate. Junior engineers are a structural part of the verification layer — removing them hollows it at the exact moment it needs to grow.
+At the individual level, the gap between perceived and measured speed is equally stark. Developers reported feeling 20% faster using AI tools. They were actually 19% slower. The dominant cause being time spent reviewing and correcting AI output. 🟡 The speed gain went to generation. The time debt went to verification.
 
-## Deterministic Gates First
+## Deterministic checks first
 
-The cheapest verification is automated. Run your type-checker, run your test suite, run your linter — whatever deterministic tools your stack provides. These gates catch a large class of errors in milliseconds, with zero hallucination risk. They should be the first stage of every pipeline — not a replacement for review, but a prerequisite for it. [See Pipeline](./pipeline.md) for how this fits as a stage.
+The cheapest verification is automated. Run `tsc --noEmit`, your linter, and your test suite before any LLM review token is spent. These catch a large class of errors in milliseconds, with no hallucination risk, for free. They belong at the front of every pipeline. 🟢
 
-But deterministic gates have a sharp limit. 🟢 In a production pipeline run (Experiment 5), an agent editing an authentication service broke `JIRA_SERVICE_USER` through an incorrect `||` operator split. The type-checker passed. All tests passed. The error was a runtime logic error — invisible to static analysis — caught only by a separate reviewer agent. In a different pipeline run (Experiment 3), review agents had a 0% first-attempt pass rate across three iterations — and both failure types (missing imports, duplicate exports from wildcard re-exports) were deterministically checkable errors that a type-check and a simple grep would have caught before any LLM review token was spent. 🟢
+But deterministic gates have a hard ceiling. In one of our pipeline runs (Experiment 5), an agent implementing a router with correct types and passing tests broke `JIRA_SERVICE_USER` through a `||` operator incorrectly split across lines during editing. The type-checker passed. All tests passed. A separate reviewer agent running the affected code path caught it. `tsc` did not. The error was a runtime logic error, invisible to static analysis. 🟢
 
-The lesson from both experiments points in the same direction: deterministic checks are necessary AND insufficient. They catch what can be specified formally — type errors, lint violations, import mismatches. They miss reasoning errors, misunderstood requirements, and logic that is syntactically correct but semantically wrong. Run them before review to clear the easy cases; then send the hard cases to a reviewer with clean context. [Specification](./specification.md) is the upstream complement — a precise spec reduces the space of logic errors before any code is written.
+The feedback signal hierarchy, from cheapest to most expensive: syntax and types → unit tests → integration tests → observability data → visual and E2E verification. 🟡 Each layer catches a different failure class. Skipping the cheap layers doesn't save time. It pushes costs up to the expensive ones.
 
-Edit corruption is a third category that both static analysis and logic review miss. 🟢 The Experiment 5 failure above exposed a symptom: code physically broken during editing, with the error invisible to type-checking. We initially attributed this to a platform limitation and built a `multi-edit.ts` extension to compensate. Experiment 7 found the actual cause: the extension itself was bypassing Pi's native fuzzy matching pipeline, which already handles trailing whitespace, Unicode quotes and dashes, NBSP, and NFKC normalization. Removing the extension revealed the true baseline: across 370 historical sessions and 1,527 pre-bug edits, the native error rate was **1.6%**. 🟢 During the bug period, the same metric spiked to 94.1%. A synthetic benchmark on unfamiliar code measured 7.1% (42 edits, 3 errors) — real sessions on familiar codebases run roughly 4× lower. Model choice matters: Opus produces 1.1% edit errors versus Sonnet's 2.2% per-edit, a 3.5× gap at the session level. 🟢 Edit volume is the stronger predictor — sessions with 20+ edits see 2.4% error rates versus 0.9% for lighter sessions. Counter-intuitively, reading the file before editing does not reduce errors; the failures are model oldText generation mistakes, not failures of context. The meta-lesson: before attributing a quality problem to the platform, audit your own tooling. For whole-declaration replacements where the file may have drifted since the last read, `semantic_edit` retains a ~7% advantage by matching on identifier rather than exact text.
+Pre-flight checks also eliminate waste at the review stage. In Experiment 3 (24-file type refactor), review agents required three iterations before passing. Both failure types were missing imports and duplicate exports from wildcard re-exports. A type-check and a grep would have caught them before any reviewer was spawned. After that run, pre-flight became a permanent pipeline stage: type-check, lint, and targeted pattern-match before any LLM review. Deterministic first, LLM second. 🟢
 
-Feedback signals form a hierarchy — execution, tests, static analysis, review, long-horizon outcome — each catching a different failure class. Operating only at the bottom two layers leaves the upper layers dark, and that is precisely where AI-generated logic errors accumulate.
+AI-generated code demands more review effort by default. Across 8.1 million pull requests, AI code required 1.7× more review revisions than human-written code. 🟡 Pre-flight checks don't close that gap; they ensure reviewers spend cycles on logic and architecture, not compiler errors.
 
-## Separate Builder from Reviewer
+## Separate the builder from the reviewer
 
-Builder and reviewer must not share context. 🟢 In our pipeline, an implementation worker produced code that passed type-checking and reported success when asked to self-evaluate. A separate reviewer agent, starting from a clean session with only the spec and the diff, immediately found three bugs: a dead file that should have been deleted, a duplicate comment block, and a string constant silently corrupted during editing — the worker had split a multi-part expression across lines and dropped a prefix, producing code that compiled but would fail at runtime. The worker understood the task correctly but introduced the breakage through the edit operation itself. It could not see the problem because it shared the same reasoning path that caused it — the assumption "I just edited this, so it must be right" was baked into its context.
+Different session. Clean context. No shared state with the builder. Not a preference. A requirement. 🟢
 
-The structural fix is simple: different session, different model, different instructions — any of these breaks the shared-blind-spot problem. [Principle 4](./principles.md) encodes this as a hard architectural requirement, not a preference.
+A reviewer starting from the spec and the diff sees only what was delivered. The implementation agent knows what it tried to do, and that knowledge contaminates its ability to see what it missed. Anthropic names this "self-evaluation bias" explicitly. We observed it independently across multiple experiments. Mario Fernandez at Sentry documented it publicly in March 2026. 🟡🟠
 
-Separate review is not a guarantee. In our own pipeline runs, the reviewer occasionally missed issues that a human caught later — particularly when the bug was in the *intent* of the spec rather than the *implementation* of the code. A reviewer with clean context sees what the worker broke, but it still trusts the spec it was given. If the spec itself is wrong, the reviewer validates incorrect behavior as correct. This is why spec review (upstream) and code review (downstream) are complementary, not substitutes.
+Passive review is not enough. CC's verification agent guards against a specific pattern: reading the code, writing PASS, running zero commands. They named it. "Verification avoidance." It's common enough to need a name. 🟡
 
-The BMAD Adversarial Review pattern makes structural isolation operational: the reviewer receives an explicit adversarial mandate. The instruction is not "review this code" but *"you MUST find issues — zero findings triggers a halt."* This eliminates the default toward approval. ⚪ The reviewer evaluates the artifact, not the intent behind it; it has no access to the author's reasoning, only to the output.
+The minimum viable reviewer: type-check, run affected tests, grep anti-patterns, verify diff against the original spec. Not the agent's description of it. That distinction matters. The reviewer should never see the builder's stated intentions. Only requirements and output. ⚪
 
-A smarter model does not fix a pipeline that routes builder output straight to production. The harness determines the ceiling, not the model.
+One sentence changes everything. The reviewer receives not "review this code" but *"you must find issues. Zero findings triggers a halt."* Courtesy review → adversarial review. The structural change is a single instruction. ⚪
 
-## Multi-Model Review
+## Multi-model review catches different things
 
-Different models have different failure modes. Running the same model twice on the same artifact exposes the same blind spots twice — running different models does not.
+Same model, same artifact, same blind spots. Twice. Different models fail in different places. Complementary, not redundant. 🟡
 
-In our KB experiments, agents with different knowledge bases and different contexts produced qualitatively different outputs on the same task. 🟢 A generic agent proposed a technical migration (replace JSON parsing with function calling). An agent with accumulated project knowledge proposed an architectural redesign (binary router + tools + verification). The difference was not code quality — it was thinking level. The same divergence applies to review: a model that reasons about architecture catches different things than one that focuses on syntax correctness.
+133 cycles. 42 development phases. Four models, strict isolation. No model saw another's output. The specialization was consistent: GPT caught Python idioms and security holes; Claude caught reasoning chains and architecture drift. One race condition in an async handler? Found only through the multi-model pass. Neither model surfaced it alone across multiple individual reviews. 🟡
 
-A 133-cycle controlled experiment across four models, with strict isolation so models never saw each other's outputs, showed consistent divergence in what each model caught. 🟡 GPT concentrated on Python idioms and security vulnerabilities. Claude concentrated on reasoning chains and architectural coherence. A race condition in an async handler was found exclusively through the multi-model pass — neither model alone would have caught it, and a single-model re-review of the same code missed it.
+This is infrastructure now. A `codex-plugin` for Claude Code runs GPT-based review inside a Claude-driven pipeline. Cross-model, officially endorsed by OpenAI. 🟡 Mozilla's Star Chamber fans out to multiple providers for consensus. 🟡 Practical split: Claude for architecture (structure, coupling, boundaries). GPT for security (injection, error handling, language footguns). They don't see each other's output. Independence is the point.
 
-Cross-model review has moved from experiment to tooling. A `codex-plugin` for Claude Code ships GPT-based review inside a Claude-driven pipeline — cross-model review officially endorsed by OpenAI. 🟡 Pi's `pi-council` extension spawns Claude, GPT, Gemini, and Grok in parallel, aggregating independent opinions to reduce single-model bias. 🟠 The pattern is institutional now, not experimental.
+## Adversarial probes over courtesy checks
 
-## Pre-flight Before Review
+Knowing *what to look for* is what separates a verification agent from a politeness layer. Claude Code's verification agent (v2.1.88) carries a fixed list of reasoning shortcuts it monitors in its own output and actively rejects when it detects them. 🟡
 
-Review agents are expensive. Sending them code that fails type-checking or has obvious import errors wastes tokens on problems a shell command solves in milliseconds.
+The self-rationalization patterns it catches and reverses:
+- "The code looks correct based on my reading"
+- "The implementer's tests already pass"
+- "This is probably fine"
+- "This would take too long"
 
-We learned this through waste, not cost. 🟢 In Experiment 3, a full pipeline run across 24 files required three review iterations before passing. Both failure types (missing import updates, duplicate exports from wildcard re-exports) would have been caught by a type-check pass and a targeted grep. After that run, pre-flight checks became a permanent pipeline stage: type-check, lint, and pattern-match for known error categories run before any review token is spent.
+The probe list is equally concrete: concurrency (does a duplicate create crash?), boundary values (0, -1, empty string, MAX_INT, unicode), idempotency (same mutating request twice), orphan operations (delete non-existent ID). Not "does it seem robust". Specific attack scenarios, run as commands, with captured output. 🟡
 
-The pre-flight checklist is project-specific, but the pattern is universal:
-- Type-check (`tsc --noEmit` for TypeScript, `mypy` for Python, `cargo check` for Rust — whatever your stack has)
-- Linter pass (no new violations)
-- Grep for known anti-patterns (orphaned operators, duplicate exports, debug statements in production paths)
-- Test suite (existing tests still pass)
+The format enforces accountability: every check requires `Command run:`, `Output observed:`, `Result: PASS/FAIL`. A check without command output gets rejected by the caller. PARTIAL is valid only for environment limitations. Never for "unsure." The principle transfers to any reviewer: if you can't show what you ran and what it returned, you haven't reviewed anything. 🟡
 
-Pre-flight does not replace review. It clears the mechanical failures so the reviewer can focus on logic, architecture, and spec compliance — the things only a reasoning agent can evaluate.
+## Trajectory and observability
 
-Not every task needs the full stack. A one-file bug fix can ship with just pre-flight checks and a human glance. A multi-file refactor across domain boundaries needs pre-flight, a separate reviewer agent, and possibly multi-model review. The verification depth should match the blast radius of the change — over-verifying trivial fixes wastes tokens, under-verifying architectural changes wastes production stability.
+Output tells you whether the result was correct. Trajectory tells you how the agent got there. 🟡 Which tools fired. What order. How many retries. Whether it read files before editing them.
 
-## Adversarial Probes
+A correct output after 30 reads and 15 retries is a different system from a correct output after 4 reads and 0 retries. Same result. Completely different stability profile. The output-only view can't see this.
 
-Static multi-model review catches many issues; adversarial probes catch a different category — behavioral failures that only emerge under specific inputs.
+OpenTelemetry's GenAI semantic conventions standardize this: `gen_ai.chat` spans for LLM calls, `agent.invoke` for agent steps, `tool.execute` for tool calls. Datadog, Honeycomb, and New Relic support the spec natively. LangChain, CrewAI, AutoGen, and AG2 emit OTel spans natively. The infrastructure exists and is ready to use. 🟡
 
-A dedicated verification subagent whose sole role is generating adversarial test cases — edge inputs, invalid states, malformed payloads, permission boundary violations — adds a layer that passive review misses. The key constraint is that the probe agent never evaluates its own probes — it hands them to an execution environment and observes outcomes. The probing function and the judging function stay separate; collapsing them recreates the self-review problem at the probe level.
+Promptfoo (350K+ developers, acquired by OpenAI in March 2026) adds trajectory assertions: `tool-used`, `tool-args-match`, `tool-sequence`, `step-count`, `goal-success`, as testable properties in a three-layer testing model: black-box (final output), component (each step in isolation), and trace-based (full reasoning path). A token diagnostic gives a quick signal: high prompt tokens and low completion tokens mean the agent is reading files (healthy); low prompt with high completion means you are testing the model's memory, not the agent's behavior. 🟡
 
-Formal contracts sharpen what probes test against. 🟡 In a study of 1,980 sessions, agents operating under formal behavioral contracts — specifying preconditions, invariants, goals, and recovery behaviors — detected 5.2–6.8 soft constraint violations per session that uncontracted agents missed. Overhead was under 10ms per invocation. The contract makes implicit assumptions explicit, giving the probe agent a defined surface to test against rather than an open-ended guessing exercise.
+Our `trajectory.py` (built April 2026) parses Pi session JSONL into structured tool events: read-before-edit ratio, error cascades, retry counts, cost per session. It served as the measurement instrument for Experiment 7, tracing 366 sessions and 16K tool events to isolate the root cause of our edit error rate. The gap: `trajectory.py` is an analysis tool, not a CI gate. Assertions run after the fact rather than blocking a bad run in progress. 🟢 The next step is converting analysis into automated gates that halt degraded runs rather than just documenting them.
 
-## Trajectory and Observability
+## Continuous evaluation, not vibe checks
 
-A verification pass at the end of a task tells you whether the output is correct. Trajectory observability tells you *why* — which tool calls fired, in what order, how many steps were taken, where the agent diverged from the expected path.
+Manual spot-checking is not an evaluation strategy. It is a feeling. 🟡 A prompt working 99% of the time in manual testing can silently degrade to 92% accuracy from model weight drift alone. No visible signal in the specific outputs you happen to review. Google Cloud named this the "vibe check trap" in February 2026: manually chatting with an agent to see if it "feels right" provides no protection against gradual degradation.
 
-Failures cluster at the Action→Result transition — tool output misinterpretation, not planning errors. 🟡 This means assertion checkpoints should focus on tool output parsing, not just plan compliance. A task completing in 47 tool calls when the expected path is 12 is a signal worth investigating, even if the final output looks correct.
+The response is continuous evaluation with deterministic assertions: the same 20–50 representative tasks run against the live pipeline on a schedule. Promptfoo's CI/CD integration implements this as quality gates: fail the build if pass rate drops below 95%, run scheduled security scans, track regression deltas between model versions. 🟡 The evaluation set is fixed; only the agent's behavior changes between runs. When any metric trends down over three consecutive runs, it warrants investigation before the next feature ships.
 
-Standard infrastructure now exists for this. 🟡 OpenTelemetry GenAI conventions define standard spans for LLM calls, agent invocations, and tool executions. Datadog, Honeycomb, and New Relic support the spec natively. Promptfoo extends this to assertions: `tool-used`, `tool-sequence`, and `step-count` are all testable properties — a three-layer approach covering black-box (final output), component (each step in isolation), and trace-based (full reasoning path).
+Our own Opus degradation incident (April 2026) showed what undetected drift looks like over three days: Read:Edit ratio dropped from 6.6 to 2.0, measured thinking depth fell 67%, cost per task increased 80×, and the model began violating its own documented conventions despite CLAUDE.md being present in context. 🟢 None of this was visible in any individual task output. The failure was only detectable in trajectory metrics compared against a prior baseline. Exactly the gap that continuous evaluation would have caught before it compounded.
 
-Longitudinal capture addresses the incident investigation gap. HuggingFace Agent Traces launched native support for agent trajectory publishing — auto-detecting formats for Claude Code, Codex, and Pi. 🟠 When something breaks in production, you trace back through the session trajectory rather than reconstructing from memory and commit history.
+The practical minimum: track cost per task, pass@1 rate, and Read:Edit ratio as time series. When any metric crosses 2σ above its baseline across three sessions, investigate before shipping. The trajectory assertions from `trajectory.py` become the input; the threshold and alerting are engineering work, not research. ⚪
 
-## Silent Degradation
+## Open questions
 
-Model quality is not static, and degradation does not announce itself. A production incident in April 2026 demonstrated that quality collapse can happen silently, accumulate across sessions, and defeat every code-level quality gate in the pipeline. 🟢
+**Automated degradation detection.** The April 2026 incident documented the signature clearly: Read:Edit ratio, thinking depth, stop-hook violations, and cost all moved together while CLAUDE.md was in context and code-level quality checks passed. The metrics exist in `trajectory.py`. What doesn't exist is an automated detector that fires before the fourth degraded session rather than after. Trajectory assertions as CI gates are the prerequisite. The threshold validation requires establishing what constitutes normal variance versus genuine model-quality shift. A sample-size question we haven't resolved. 🟢
 
-The incident involved a single Opus instance operating across a three-day window. The behavioral signals were only visible in aggregate: the Read:Edit ratio dropped from 6.6 to 2.0, meaning the model was editing more aggressively without prior exploration. Measured thinking depth fell 67%. Cost per task increased 80×. And despite CLAUDE.md being present in context, the model violated its own documented conventions across multiple sessions — not by misunderstanding them, but by drifting past them without flagging the conflict.
+**Reviewer baseline problem.** The current reviewer sees the current codebase state, not the delta. A pre-existing type error is indistinguishable from one the agent introduced. Fixing this requires a baseline snapshot: run `tsc` on main before the task, capture the error set, compare the post-task error set against that baseline rather than zero. Not implemented. One-day engineering work with direct impact on review accuracy. 🟢
 
-None of this was caught by pre-flight checks or the review pipeline — the logic of each individual edit was defensible. The failure was invisible at the task level and only visible at the session level when trajectory metrics were compared against a prior baseline.
-
-Two structural findings emerged. First, pipeline design provides partial protection: a structured workflow with externalized plans anchors task execution even when model quality drops. The degraded agent still follows the plan written to disk — that plan is not dependent on model state. The pipeline's weakness is perseveration: the model looping on a subtask, accumulating cost, without making forward progress. Externalized plans don't prevent that.
-
-Second, trajectory baselines are the detection layer. 🟢 Read:Edit ratio, step count relative to task complexity, and cost per task tier form measurable baselines. When a session crosses 2σ above baseline on any of these metrics, it warrants investigation before a degraded run compounds into a production incident. The implication for evaluation design: behavioral baselines belong in your evaluation layer alongside output quality gates. A verification pipeline that only checks whether code compiles will miss a model running at 80× normal cost with 67% of its normal reasoning depth.
-
-## The Cost of Skipping Verification
-
-Subjective and objective speed diverge sharply under AI-assisted work. 🟡 Developers reported feeling 20% faster while objective measurement showed they were 19% slower — the dominant cause being time spent reviewing and correcting AI output (METR, controlled study). At scale, 8.1 million pull requests across 4,800 teams showed AI code producing 1.7× more issues per PR, with AI PR acceptance rates at 32.7% versus 84.4% for human code (LinearB, 2026). 🟡
-
-Trust in AI output runs below adoption. 🟡 96% of developers report they do not trust AI-generated code without review — yet only 48% say they actually verify it before use (Sonar, 2025). That gap between stated distrust and actual verification behavior is the direct mechanism behind the LinearB quality delta. Engineers feel skeptical but skip the check anyway, under delivery pressure or because the code looks plausible.
-
-The gap extends beyond individual sessions. A prompt that works 99% of the time in manual testing can silently degrade to 92% accuracy from model weight drift alone — without any change to the prompt or the application. 🟡 Continuous evaluation with deterministic assertions is the only defense. Manual spot-checking of AI output is not an evaluation strategy; it is a feeling.
-
-The underlying dynamic is consistent across contexts. The Sev-1 incidents, the METR study, and the model-drift case all show the same gap between perceived and measured quality. Vibe coding at the session level produces outputs that feel correct. Vibe evaluation at the organizational level produces systems that feel reliable. Both are measurement errors, and neither one is caught by adding more AI to the pipeline.
-
-Verification is not a tax on productivity. It is the mechanism by which AI output becomes production-ready software.
-
-## Open Questions
-
-- **Cross-session memory for reviewers**: If a reviewer subagent has access to prior review sessions on the same codebase, does accumulated context improve or degrade review quality?
-- **Optimal probe surface**: For a given codebase, what adversarial probe categories yield the highest defect detection rate per compute-minute?
-- **Drift detection thresholds**: Experiment 9 established Read:Edit ratio and thinking depth as degradation signals, but no statistical test has been validated for distinguishing model-weight drift from legitimate prompt sensitivity. At what sample size does such a test become actionable in a production pipeline, and what threshold separates noise from a genuine model-quality shift?
-- **Human-in-the-loop placement**: At what complexity threshold does AI-only review become insufficient, and how should escalation to human review be triggered automatically?
+**Bounded review iterations.** Nothing in our pipeline prevents a stubborn reviewer and a confused worker from cycling indefinitely. The fix is a counter: a hard ceiling on rework iterations after which a human is escalated to. But it is not in place. At what iteration count should a pipeline halt and surface to a human? This is an operational question we have not answered with data. 🟢
