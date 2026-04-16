@@ -8,6 +8,7 @@
 - [Verification](verification.md)
 - [Self-Improvement](self-improvement.md)
 - [Principles](principles.md)
+- [Playbook](playbook.md)
 - [Landscape](landscape.md)
 - [References](references.md)
 -->
@@ -20,9 +21,9 @@ How you structure an agent's memory, specs, and feedback loops matters more than
 
 ## Evolution: From Vibing to Meta-Programming
 
-The data landed before the theory. LinearB analyzed 8.1 million pull requests across 4,800 teams in 42 countries and found: AI-generated code produces 1.7× more issues than human code, waits 4.6× longer for review, and gets accepted at 32.7% versus 84.4% for human PRs. Developers _feel_ 20% faster; tasks take 19% longer end-to-end. This is the largest empirical study on developer productivity ever conducted, and it tells a clear story: the creation layer accelerated, the verification layer didn't.
+The data landed before the theory. LinearB studied 8.1 million pull requests. The headline: AI-generated code ships faster but breaks more. More issues, longer review queues, lower acceptance rates. Developers _feel_ 20% faster; tasks actually take 19% longer end-to-end. Creation accelerated. Verification didn't.
 
-The harness gap compounds the issue. Stanford's 2026 Meta-Harness study showed that changing the harness around a fixed LLM can produce a **6× performance gap on the same benchmark**. Automated harness optimization outperformed expert hand-designed harnesses and surpassed the Claude Code baseline on TerminalBench-2 — without changing a single model weight. Particula confirmed this directionally on SWE-bench: the same model scored 42% with a stock scaffold and 78% after scaffold reconstruction. Six frontier models within 0.8 points of each other. "If you're still chasing model upgrades, you're optimizing the wrong variable."
+Then Stanford dropped the other shoe. Same model, different harness — **6× performance gap** on the same benchmark. Not a better model. The same model with better scaffolding around it. Particula confirmed it on SWE-bench: stock scaffold scored 42%, reconstructed scaffold scored 78%. Six frontier models within a point of each other. The model isn't the variable. The harness is.
 
 This is the evolutionary pressure. It runs in three stages.
 
@@ -38,7 +39,7 @@ Linguistic Meta-Programming (LMP) is self-improvement of a coding agent through 
 
 The academic framing arrived independently. Tsinghua's March 2026 NLAH paper (Natural-Language Agent Harnesses) built systems where harness behavior is externalized as "a portable executable artifact in editable natural language." Their opening diagnosis: _"Agent performance increasingly depends on harness engineering, yet harness design is usually buried in controller code."_ Making it explicit and linguistic, not hard-coded, is the intervention. That's precisely what LMP is.
 
-DSPy (Stanford) arrived at the same structure from the optimization side: treat prompts as **learnable parameters** rather than hand-written strings. BootstrapFewShot and MIPROv2 search the language space automatically. The underlying claim is identical: language is the parameter space, and it can be engineered.
+Stanford's DSPy arrived at the same idea from the optimization side: stop hand-writing prompts, search the language space automatically. Treat the prompt as code that can be tested, scored, and improved by the system itself. Same underlying claim: language is the parameter space, and it can be engineered.
 
 The practical consequence: **natural language is code.** A spec with a `DO NOT` clause is a constraint. A `GLOSSARY` is a type system. A `LESSONS.md` is a feedback loop. A pipeline definition is a program. The difference between a well-written AGENTS.md and a poorly-written one is the difference between a correct program and a buggy one — the compiler is just an LLM.
 
