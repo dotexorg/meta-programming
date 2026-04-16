@@ -38,7 +38,7 @@ src/shared/            — cross-cutting utilities only
 
 Most tasks don't need the strongest model. Bug fixes, feature implementation, tests, refactors, code review — a mid-tier model handles all of these. As of mid-2026, that's Sonnet for Claude users or GPT-4.1 for OpenAI users. Switch to the top-tier model (Opus, o3) for complex multi-file refactors, architecture decisions, or subtle logic debugging where the agent needs to hold competing constraints in mind.
 
-The thinking level matters more than the model itself. In controlled testing, Sonnet with high thinking outperformed Opus with medium thinking on rule-following tasks — at a fraction of the cost. If you're going to spend tokens, spend them on thinking depth, not model size.
+The thinking level often matters more than the model. In controlled testing, the same model with high thinking outperformed itself with medium thinking on judgment tasks — and was actually cheaper (fewer tool calls, better reasoning per call). If you're going to spend tokens, spend them on thinking depth, not model size.
 
 ### 3. Manage your context like a budget
 
@@ -46,7 +46,7 @@ The context window is an attention budget, not storage. Effective reasoning degr
 
 **The discipline:** one task → verify → commit → `/clear` or new session → next task. Errors that slip through on task 3 don't poison tasks 4 through 7, because that context no longer exists. A 106-turn task in our pipeline testing didn't contaminate subsequent tasks — because we reset between them. If a task requires touching 30+ files, it's not one task. Decompose before starting.
 
-**The cache:** don't throw away cached context for no reason. Most providers have cache tiers — Claude has a 5-minute and a 1-hour window, OpenAI has similar mechanics. The longer cache means you can work comfortably in one session without losing the cost benefit of cached prompts. The short cache is ideal for fast tasks and pipeline workflows where agents spawn in quick succession.
+**The cache:** don't throw away cached context for no reason. Most providers have cache tiers — Claude has a 5-minute and a 1-hour window (check your provider's docs for specifics). The longer cache means you can work comfortably in one session without losing the cost benefit of cached prompts. The short cache is ideal for fast tasks and pipeline workflows where agents spawn in quick succession.
 
 **When context gets heavy:** at 50–60% fill, tell the agent to summarize current state, decisions made, and remaining TODOs to a HANDOFF.md file. Then `/clear` and start fresh with "Read HANDOFF.md and continue." You control what survives instead of letting auto-compact decide — and auto-compact has primacy and recency bias, keeping the beginning and end while dropping the middle.
 
