@@ -14,7 +14,7 @@
 - [Self-Improvement](self-improvement.md)
 - [Principles](principles.md)
 
-## Reference {.bottom}
+## Reference
 - [Landscape](landscape.md)
 - [References](references.md)
 -->
