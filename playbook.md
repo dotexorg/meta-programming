@@ -99,7 +99,9 @@ If the same loop happens twice on a clean start, the problem is your spec, not t
 
 If the agent's output suddenly feels shallow — missing edge cases, ignoring rules, producing generic code — the first thing to try is raising the thinking level. Adding `THINK` or `ULTRATHINK` to your prompt makes a measurable difference, often described by practitioners as "night and day."
 
-The thinking budget is what the model spends on reasoning before it starts writing. Low thinking = the agent jumps to the most likely answer. High thinking = it actually works through the problem. In controlled testing, thinking level was a stronger predictor of rule-following than model choice. A cheaper model that thinks deeply outperformed an expensive model that thinks briefly.
+The thinking budget is what the model spends on reasoning before it starts writing. Low thinking = the agent jumps to the most likely answer. High thinking = it works through the problem and catches more edge cases. In controlled testing, thinking level was a stronger predictor of rule-following than model choice. A cheaper model that thinks deeply outperformed an expensive model that thinks briefly.
+
+But more thinking isn't always better. At very high levels, the model can over-generate: verbose output, unnecessary abstractions, over-engineered solutions to simple problems. It also shifts from compliance toward conviction — the model may push back on your rules if it "thinks" they're wrong. The sweet spot depends on task complexity: high thinking for architecture and debugging, medium for routine implementation.
 
 When you notice quality fluctuating across sessions (same prompt, noticeably worse output), it may be provider-side: GPU load, checkpoint rotation, or A/B testing can all reduce the thinking budget silently. Extended thinking keywords override that floor and restore the baseline.
 
