@@ -23,7 +23,7 @@ The boundary between _describing_ a system and _creating_ one is disappearing. T
 
 How you structure an agent's memory, specs, and feedback loops matters more than which model you pick. This site documents why, and what to do about it.
 
-<img alt="image" src="assets/index_hero.avif" />
+<img alt="image" src="assets/index_hero.webp" />
 
 ## Evolution: From Vibing to Meta-Programming
 
