@@ -2,13 +2,19 @@
 
 <!-- NAV
 - [Meta-Programming](index.md)
+
+## Start
+- [🍕 Playbook](playbook.md)
+
+## Deep Dive
 - [Specification](specification.md)
 - [Context Engineering](context-engineering.md)
 - [Pipeline](pipeline.md)
 - [Verification](verification.md)
 - [Self-Improvement](self-improvement.md)
 - [Principles](principles.md)
-- [Playbook](playbook.md)
+
+## Reference {.bottom}
 - [Landscape](landscape.md)
 - [References](references.md)
 -->

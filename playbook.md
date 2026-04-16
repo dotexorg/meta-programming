@@ -4,6 +4,8 @@ You don't need to read the full site to get results. These 15 rules cover 80% of
 
 The rules are backed by A/B tests, production incidents, and a year of daily agent use. The theory lives in the other pages. This page is the cheat sheet.
 
+Examples use Claude Code, but most rules apply to any coding agent — Cursor, Codex, Windsurf, Copilot. The underlying constraint is the same: an LLM with a context window, a set of tools, and your instructions. Where a rule is Claude Code-specific (like `/clear`), the equivalent in your tool does the same thing.
+
 ## Setup
 
 ### 1. Keep CLAUDE.md under 200 lines
