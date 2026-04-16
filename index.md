@@ -23,7 +23,7 @@ How you structure an agent's memory, specs, and feedback loops matters more than
 
 The data landed before the theory. LinearB studied 8.1 million pull requests. The headline: AI-generated code ships faster but breaks more. More issues, longer review queues, lower acceptance rates. Developers _feel_ 20% faster; tasks actually take 19% longer end-to-end. Creation accelerated. Verification didn't.
 
-Then Stanford dropped the other shoe. Same model, different harness — **6× performance gap** on the same benchmark. Not a better model. The same model with better scaffolding around it. Particula confirmed it on SWE-bench: stock scaffold scored 42%, reconstructed scaffold scored 78%. Six frontier models within a point of each other. The model isn't the variable. The harness is.
+The natural response is to wait for a better model. Stanford's 2026 Meta-Harness study suggests that's the wrong fix. They took the same model, changed only the scaffolding around it, and measured a **6× performance gap** on the same benchmark. Particula ran a similar test on SWE-bench: same model, stock scaffold scored 42%, rebuilt scaffold scored 78%. The model didn't change. The process around it did — and that was the difference between failing and passing.
 
 This is the evolutionary pressure. It runs in three stages.
 
@@ -43,7 +43,7 @@ Stanford's DSPy arrived at the same idea from the optimization side: stop hand-w
 
 The practical consequence: **natural language is code.** A spec with a `DO NOT` clause is a constraint. A `GLOSSARY` is a type system. A `LESSONS.md` is a feedback loop. A pipeline definition is a program. The difference between a well-written AGENTS.md and a poorly-written one is the difference between a correct program and a buggy one — the compiler is just an LLM.
 
-This convergence is measurable at scale. A Bamberg/Heidelberg systematic analysis of 2,926 repositories across Claude Code, GitHub Copilot, Cursor, Gemini, and Codex found independent convergence on the same pattern: linguistic configuration files (CLAUDE.md, AGENTS.md, COPILOT-INSTRUCTIONS.md) as the primary mechanism for shaping agent behavior. Pydantic operationalized this most explicitly: they extracted 4,668 PR review comments and distilled them into approximately 150 AGENTS.md rules. Implicit engineering judgment, compiled into explicit agent instructions.
+This convergence is measurable at scale. A Bamberg/Heidelberg systematic analysis of 2,926 repositories across Claude Code, GitHub Copilot, Cursor, Gemini, and Codex found independent convergence on the same pattern: linguistic configuration files (CLAUDE.md, AGENTS.md, COPILOT-INSTRUCTIONS.md) as the primary mechanism for shaping agent behavior. Pydantic took it furthest: they extracted 4,668 PR review comments and distilled them into roughly 150 AGENTS.md rules. Implicit engineering judgment, compiled into explicit agent instructions.
 
 AGENTS.md now has 60,000+ repositories and Linux Foundation endorsement. Microsoft Research RiSE named "Intent Formalization" a grand challenge for 2026. AWS launched Kiro. A code review agent in production self-improves from pull request activity in real time, closing the loop that Layer 3 describes. The industry is converging on language as the primary engineering artifact. It hasn't named what it's converging on.
 
@@ -53,13 +53,13 @@ LMP has structure. Three layers, each dependent on the one below.
 
 ### Layer 1: Persistent Model of Self
 
-Not documentation. Not memory. An epistemology: the agent's working model of what it knows, how it knows it, where it fails, and what constraints it operates under. This is what separates a generic model from a system shaped by a specific engineer's context.
+Not documentation. Not memory. A working model of what the agent knows, how it knows it, where it fails, and what constraints it operates under. This is what separates a generic model from a system shaped by a specific engineer's context.
 
 The performance difference is real. The ERL paper showed that agents operating with heuristics extracted from prior trajectories outperformed ReAct baselines by **+7.8%** on standard benchmarks. Their finding: _"Heuristics provide more transferable abstractions than few-shot prompting."_ Persistent structured knowledge outperforms in-context examples — the format matters.
 
 We measured this directly. In a controlled A/B test, the same architectural problem ran through a generic Claude Sonnet instance and through an agent with a structured knowledge base. The generic agent asked for a code map. The KB agent flagged the exploration-versus-exploitation paradox, with evidence from prior sessions, before writing a line of code. The difference isn't code quality. It's the level of reasoning the agent brings before touching implementation. The broader practitioner community confirmed the pattern independently — Karpathy's framing of personal KB-building via LLMs named the same mechanism: the KB is the primary artifact, not the code it produces.
 
-Layer 1 explains why all production agent systems converge on human-readable markdown: AGENTS.md, CLAUDE.md, SKILL.md, DECISIONS.md, MEMORY.md. Markdown is version-controlled, readable by humans, parseable by agents, portable across model versions. Anthropic's "Building Agents with Skills" organizes persistent behavioral configuration as composable markdown files rather than model fine-tunes. Not a coincidence. It's the natural format for a shared epistemology.
+Layer 1 explains why all production agent systems converge on human-readable markdown: AGENTS.md, CLAUDE.md, SKILL.md, DECISIONS.md, MEMORY.md. Markdown is version-controlled, readable by humans, parseable by agents, portable across model versions. Anthropic's "Building Agents with Skills" organizes persistent behavioral configuration as composable markdown files rather than model fine-tunes. Not a coincidence. It's the natural format for shared knowledge that both sides can read and edit.
 
 ### Layer 2: Personal Intent Language
 
@@ -75,7 +75,7 @@ We verified the constraint layer specifically. In an ablation study, we stripped
 
 The system observes what worked, extracts lessons, refines the model, improves the language. No weight updates.
 
-Stanford's Meta-Harness study operationalized this at the harness level: automated harness optimization searching configurations the same way gradient descent searches weights. The 6× performance gap between manual and optimized harnesses shows the scale of what's available in the language space, without any model change.
+Stanford's Meta-Harness study proved this at the harness level: automated optimization searching configurations the same way gradient descent searches weights. The 6× performance gap between manual and optimized harnesses shows the scale of what's available in the language space, without any model change.
 
 A separate end-to-end pipeline run validated the approach concretely. Twenty-four files, 253 tests, zero regressions, $5.50 in API cost. Structured process (Scout → Spec → Plan → Worker → Reviewer → Lessons) beat raw context injection on cost, quality, and first-attempt pass rate. The Lessons stage is what makes the next run cheaper: the reviewer extracts structured findings, and those findings feed forward.
 

@@ -10,7 +10,7 @@ Agents praise their own work. Confidently, consistently, and incorrectly. Across
 
 A subtler version is harder to catch. At higher thinking levels, an agent will formally confirm it will follow a rule, then proceed to violate it in implementation. Not through misunderstanding, but through a "workaround" framing. The stated intent passes inspection; the actual behavior does not. Standard benchmarks don't detect this pattern. A verification pass that trusts a model's self-report on spec adherence is checking the wrong signal entirely.
 
-The cost surfaces fast at scale. After deploying 21,000 agents with 80% tooling adoption, one engineering organization hit 4 Sev-1 incidents in 90 days, including a six-hour outage estimated at 6.3 million lost orders. The internal diagnosis: *"the creation layer accelerated, verification layer stayed the same size."* More code shipping faster into an unchanged review process is risk accumulation, not productivity.
+The cost surfaces fast at scale. One engineering organization rolled out agents across 21,000 developers and hit multiple Sev-1 incidents in the following quarter — including a six-hour outage. The internal diagnosis: *"the creation layer accelerated, verification layer stayed the same size."* More code shipping faster into an unchanged review process is risk accumulation, not productivity.
 
 At the individual level, the gap between perceived and measured speed is equally stark. Developers reported feeling 20% faster using AI tools. They were actually 19% slower. The dominant cause being time spent reviewing and correcting AI output. The speed gain went to generation. The time debt went to verification.
 
@@ -28,21 +28,21 @@ AI-generated code demands more review effort by default. Across 8.1 million pull
 
 ## Separate the builder from the reviewer
 
-Different session. Clean context. No shared state with the builder. Not a preference. A requirement.
+The reviewer needs a different session with clean context and no shared state from the builder. Not a preference — a requirement.
 
 A reviewer starting from the spec and the diff sees only what was delivered. The implementation agent knows what it tried to do, and that knowledge contaminates its ability to see what it missed. Anthropic names this "self-evaluation bias" explicitly. We observed it independently across multiple experiments. Mario Fernandez at Sentry documented it publicly in March 2026.
 
-Passive review is not enough. CC's verification agent guards against a specific pattern: reading the code, writing PASS, running zero commands. They named it. "Verification avoidance." It's common enough to need a name.
+Passive review is not enough. Claude Code's verification agent guards against a specific pattern: reading the code, writing PASS, and running zero commands. They call it "verification avoidance," and it's common enough to need a name.
 
-The minimum viable reviewer: type-check, run affected tests, grep anti-patterns, verify diff against the original spec. Not the agent's description of it. That distinction matters. The reviewer should never see the builder's stated intentions. Only requirements and output.
+The minimum viable reviewer runs type-check, affected tests, anti-pattern grep, and verifies the diff against the original spec — not the agent's description of it. That distinction matters because the reviewer should never see the builder's stated intentions, only requirements and output.
 
 One sentence changes everything. The reviewer receives not "review this code" but *"you must find issues. Zero findings triggers a halt."* Courtesy review → adversarial review. The structural change is a single instruction.
 
 ## Multi-model review catches different things
 
-Same model, same artifact, same blind spots. Twice. Different models fail in different places. Complementary, not redundant.
+Running the same model twice on the same artifact means the same blind spots, twice. Different models fail in different places, which makes them complementary rather than redundant.
 
-133 cycles. 42 development phases. Four models, strict isolation. No model saw another's output. The specialization was consistent: GPT caught Python idioms and security holes; Claude caught reasoning chains and architecture drift. One race condition in an async handler? Found only through the multi-model pass. Neither model surfaced it alone across multiple individual reviews.
+We tested this across 133 cycles and 42 development phases with four models in strict isolation — no model saw another's output. The specialization was consistent: GPT caught Python idioms and security holes, while Claude caught reasoning chains and architecture drift. One race condition in an async handler only appeared through the multi-model pass; neither model found it alone across multiple individual reviews.
 
 This is infrastructure now. A `codex-plugin` for Claude Code runs GPT-based review inside a Claude-driven pipeline. Cross-model, officially endorsed by OpenAI. Mozilla's Star Chamber fans out to multiple providers for consensus. Practical split: Claude for architecture (structure, coupling, boundaries). GPT for security (injection, error handling, language footguns). They don't see each other's output. Independence is the point.
 
@@ -56,19 +56,19 @@ The self-rationalization patterns it catches and reverses:
 - "This is probably fine"
 - "This would take too long"
 
-The probe list is equally concrete: concurrency (does a duplicate create crash?), boundary values (0, -1, empty string, MAX_INT, unicode), idempotency (same mutating request twice), orphan operations (delete non-existent ID). Not "does it seem robust". Specific attack scenarios, run as commands, with captured output.
+The probe list is equally concrete: does a duplicate create crash? What happens with 0, -1, empty string, MAX_INT? Same mutating request twice? Delete a non-existent ID? Not "does it seem robust." Specific attack scenarios, run as commands, with captured output.
 
 The format enforces accountability: every check requires `Command run:`, `Output observed:`, `Result: PASS/FAIL`. A check without command output gets rejected by the caller. PARTIAL is valid only for environment limitations. Never for "unsure." The principle transfers to any reviewer: if you can't show what you ran and what it returned, you haven't reviewed anything.
 
 ## Trajectory and observability
 
-Output tells you whether the result was correct. Trajectory tells you how the agent got there. Which tools fired. What order. How many retries. Whether it read files before editing them.
+Output tells you whether the result was correct. Trajectory tells you how the agent got there: which tools fired, in what order, how many retries, and whether it read files before editing them.
 
-A correct output after 30 reads and 15 retries is a different system from a correct output after 4 reads and 0 retries. Same result. Completely different stability profile. The output-only view can't see this.
+A correct output after 30 reads and 15 retries is a completely different system from a correct output after 4 reads and 0 retries. Same result, but the stability profile is night and day — and an output-only view can't tell the difference.
 
 OpenTelemetry's GenAI semantic conventions standardize this: `gen_ai.chat` spans for LLM calls, `agent.invoke` for agent steps, `tool.execute` for tool calls. Datadog, Honeycomb, and New Relic support the spec natively. LangChain, CrewAI, AutoGen, and AG2 emit OTel spans natively. The infrastructure exists and is ready to use.
 
-Promptfoo adds trajectory assertions: `tool-used`, `tool-args-match`, `tool-sequence`, `step-count`, `goal-success`, as testable properties in a three-layer testing model: black-box (final output), component (each step in isolation), and trace-based (full reasoning path). A token diagnostic gives a quick signal: high prompt tokens and low completion tokens mean the agent is reading files (healthy); low prompt with high completion means you are testing the model's memory, not the agent's behavior.
+Promptfoo adds trajectory assertions: `tool-used`, `tool-args-match`, `tool-sequence`, `step-count`, `goal-success`, as testable properties in a three-layer testing model: black-box (final output), component (each step in isolation), and trace-based (full reasoning path). A token diagnostic gives a quick signal. High prompt tokens, low completion tokens = the agent is reading files. Healthy. Low prompt, high completion = you're testing the model's memory, not the agent's behavior.
 
 Our `trajectory.py` parses Pi session JSONL into structured tool events: read-before-edit ratio, error cascades, retry counts, cost per session. It served as the measurement instrument for Experiment 7, tracing 366 sessions and 16K tool events to isolate the root cause of our edit error rate. The gap: `trajectory.py` is an analysis tool, not a CI gate. Assertions run after the fact rather than blocking a bad run in progress. The next step is converting analysis into automated gates that halt degraded runs rather than just documenting them.
 
@@ -78,7 +78,7 @@ Manual spot-checking is not an evaluation strategy. It is a feeling. A prompt wo
 
 The response is continuous evaluation with deterministic assertions: the same 20–50 representative tasks run against the live pipeline on a schedule. Promptfoo's CI/CD integration implements this as quality gates: fail the build if pass rate drops below 95%, run scheduled security scans, track regression deltas between model versions. The evaluation set is fixed; only the agent's behavior changes between runs. When any metric trends down over three consecutive runs, it warrants investigation before the next feature ships.
 
-Our own Opus degradation incident showed what undetected drift looks like over three days: Read:Edit ratio dropped from 6.6 to 2.0, measured thinking depth fell 67%, cost per task increased 80×, and the model began violating its own documented conventions despite CLAUDE.md being present in context. None of this was visible in any individual task output. The failure was only detectable in trajectory metrics compared against a prior baseline. Exactly the gap that continuous evaluation would have caught before it compounded.
+Our own Opus degradation incident showed what undetected drift looks like. Over three days, every metric moved in the wrong direction: the agent stopped reading before editing, thinking depth cratered, cost per task spiked, and the model began violating its own documented conventions — with CLAUDE.md still in context. None of this was visible in any individual task output. The failure was only detectable in trajectory metrics compared against a prior baseline. Exactly the gap that continuous evaluation would have caught before it compounded.
 
 The practical minimum: track cost per task, pass@1 rate, and Read:Edit ratio as time series. When any metric crosses 2σ above its baseline across three sessions, investigate before shipping. The trajectory assertions from `trajectory.py` become the input; the threshold and alerting are engineering work, not research.
 

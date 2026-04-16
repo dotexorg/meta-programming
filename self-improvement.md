@@ -30,7 +30,7 @@ All five background processes fire at startup and run fire-and-forget off the ma
 
 After each session, a forked agent reads the conversation history and writes structured facts into four buckets. *User*: role, goals, preferences. *Feedback*: corrections and confirmations. *Project*: ongoing work state. *Reference*: pointers to external systems.
 
-A derivability test filters noise. Any fact re-derivable from the codebase itself doesn't need storage. Git history is authoritative for "we added a payment module." Only experience-dependent knowledge passes through: the developer's preference for flat error handling, the team convention that broke in production, the specific sequence that causes CI to time out.
+A derivability test filters noise. Any fact re-derivable from the codebase itself doesn't need storage. Git history already knows "we added a payment module." That doesn't need storage. What passes through: the developer's preference for flat error handling. The team convention that broke in production. The specific sequence that causes CI to time out. Experience, not facts.
 
 Confirmations count as signal alongside corrections. The quiet "yes, exactly" that accepts an unusual approach carries the same evidential weight as explicit pushback. Recording only failures biases the agent away from validated approaches it might otherwise abandon on a future task.
 
@@ -46,7 +46,7 @@ Compaction is not memory loss. Three mechanisms protect state: Session Memory in
 
 Every 24 hours (after at least five sessions) a forked read-only agent runs consolidation. Four phases: Orient (read MEMORY.md), Gather (recent logs plus drifted memories), Consolidate (merge entries, convert relative dates to absolute), Prune (enforce < 200 lines and < 25KB). A file-based mutex with PID ownership prevents concurrent runs.
 
-The pruning criterion is size, not value. That's a gap. Entries removed by line count may carry more signal than entries retained by recency. Score-based pruning (which the ACE framework addresses) is a more principled approach. [See memory scoring below.](#memory-scoring)
+The pruning criterion is size, not value — and that's a meaningful gap. Entries removed by line count may carry more signal than entries retained by recency. Score-based pruning (which the ACE framework addresses) is a more principled approach. [See memory scoring below.](#memory-scoring)
 
 ## skillImprovement: rules from corrections
 
@@ -76,11 +76,11 @@ The closed-loop pattern was formalized in ExpeL. Three stages.
 
 Performance compounds as the library grows, not degrades. On HotpotQA and ALFWorld, ExpeL agents improve with each batch of trajectories. The gain comes from pattern recognition across tasks. Not single-task reflection, which saturates quickly.
 
-Our pipeline implements a production adaptation. After each feature merge, a dedicated lesson-extractor reviews what broke, what was unexpectedly hard, and what assumption was wrong. After the 24-file type refactoring in Experiment 3, the extractor produced two rules: "grep for barrel imports when moving types" and "check wildcard re-export conflicts when splitting shared modules." Both matched exactly the failure categories that caused the reviewer to fail three times before passing. Those rules now load into future pipeline runs automatically. [Full pipeline details](./pipeline.md).
+Our pipeline implements a production adaptation. After each feature merge, a dedicated lesson-extractor reviews what broke, what was unexpectedly hard, and what assumption was wrong. After the 24-file type refactoring in Experiment 3, the extractor produced two rules: "grep for barrel imports when moving types" and "check wildcard re-export conflicts when splitting shared modules." Both matched exactly the failure categories that caused three reviewer iterations. Those rules now load into future runs automatically. [Full pipeline details](./pipeline.md).
 
 ## Extraction ≠ promotion
 
-Knowing what happened this session is not the same as knowing what generalizes across sessions. These are different jobs that require different model quality. Running them with the same model is a false economy.
+Knowing what happened this session is not the same as knowing what generalizes across sessions. These are different jobs that require different model quality, and running them with the same model is a false economy.
 
 Per-session extraction (what failed, what was decided, what needs to be remembered) is cheap. A Haiku-class model handles it reliably. Cross-session synthesis (recognizing that a failure in authentication implies a rule applicable to async middleware generally) is expensive. It requires the strongest model available. Claude Code makes this concrete: `extractMemories` runs on whatever model is currently active; `/insights`, which analyzes all sessions and generates `claude_md_additions`, routes explicitly to Opus.
 
@@ -120,7 +120,7 @@ Our KB implements a simplified version. Each bullet accepts helpful/harmful feed
 
 Output quality saturates at roughly seven governed memories per entity. Adding more provides no measurable benefit, confirmed across 500 adversarial queries with 99.6% fact recall, 50% token reduction from progressive delivery, and zero cross-entity leakage. The ceiling is low. Returns come from the feedback loop and scoring quality, not from storing more entries.
 
-A separate production deployment ran 232 tasks with zero failures using four components: extraction daemon polling logs, Haiku extracting facts, a markdown vault with vector search, and an injection hook surfacing the top-2 relevant entries per prompt. Simple infrastructure. Working loop.
+A separate production deployment ran 232 tasks with zero failures. Four components: an extraction daemon polling logs, Haiku extracting facts, a markdown vault with vector search, and an injection hook surfacing the top-2 relevant entries per prompt. Simple infrastructure. Working loop.
 
 ## Open questions
 

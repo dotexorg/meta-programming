@@ -6,19 +6,21 @@ The context window isn't a buffer you fill. It's an attention budget, and you sp
 
 Context is not storage. The model computes attention relationships between every token pair (complexity scales as n² over sequence length), so adding tokens costs the model focus, not just capacity. Beginning and end of context get the most attention; the middle gets lost. This effect is consistent enough across models that it has a name: lost-in-the-middle.
 
-The Chroma Maximum Effective Context Window (MECW) paper reportedly tested 18 frontier models and found universal degradation, with the effective performance window falling as low as 1-2% of the advertised maximum in some conditions. We haven't verified those specific numbers. What we have verified: Opus 4.6 showed clear instruction-following failures at roughly 40% context fill. A task that passed cleanly in a fresh session would silently fail mid-context. Not with an error, just with the model ignoring rules set an hour earlier. That silence is the dangerous part.
+The Chroma MECW paper tested 18 frontier models. Every one degraded. In some conditions, the effective window fell to 1-2% of advertised maximum. We haven't verified their specific numbers, but we've seen the pattern ourselves: Opus 4.6 started ignoring instructions at roughly 40% context fill. Not with an error. Just silently skipping rules set an hour earlier. A task that passed in a fresh session would fail mid-context with no signal. That silence is the dangerous part.
 
-Four patterns drive degradation: poisoning, where early errors compound into later reasoning; distraction, where irrelevant content competes for attention with the actual task; confusion, where the model loses track of which sources relate to which question; and clash, where contradictory information from different context positions produces inconsistent outputs. Long-running sessions typically run into at least two. The practical implication: a 200K-token window doesn't give you 200K tokens of reliable context. Plan around a much smaller effective budget. Architect so hitting the limit fails loudly, not quietly.
+Four patterns drive degradation. **Poisoning**: early errors compound into later reasoning. **Distraction**: irrelevant content competes for attention with the actual task. **Confusion**: the model loses track of which sources relate to which question. **Clash**: contradictory information from different positions produces inconsistent output. Long sessions typically hit at least two.
+
+The practical implication: a 200K-token window doesn't give you 200K tokens of reliable context. Plan around a much smaller effective budget. Architect so hitting the limit fails loudly, not quietly.
 
 ## Progressive disclosure: load what's needed, when needed
 
-The wrong instinct is to put everything in the system prompt and let the model sort it out. The right instinct is to deliver information as close as possible to when it's actually needed.
+The wrong instinct is to put everything in the system prompt and let the model sort it out. Information lands better when it arrives close to the moment the agent actually needs it.
 
 Our knowledge base has 429 bullets, roughly 80-100K tokens. Loading the full KB into every session would consume half the window before any work started, and most of it would land in the lost-in-middle zone anyway. Instead, we load a synthesis file (~8KB) as the always-on layer and expose the full bullet store as a searchable tool. The model requests what it needs. Irrelevant material never enters context.
 
 The four-bucket strategy formalizes this pattern across any system:
 
-- **Write**: externalize persistent state to files, not conversation history
+- **Write**: save persistent state to files, not conversation history
 - **Select**: pull relevant content via search or grep rather than preloading everything
 - **Compress**: summarize old context before it rots in the middle
 - **Isolate**: split work across subagents, each with clean context
@@ -31,11 +33,11 @@ One counterintuitive finding: aggressive compression backfires. Compressing hist
 
 In a multi-agent pipeline, every subagent starts empty. Ten workers reading the codebase independently? You pay for the same files ten times. One of our pipelines burned 1.2M input tokens on scout calls alone. One feature..
 
-Scout caching kills this. One agent reads the codebase, writes a structured report to `.pi/scout-cache/`. Everyone else reads the report. Cache key is the git hash. Code changes, cache dies.
+Scout caching solves this by reading the codebase once. A single agent explores, writes a structured report to `.pi/scout-cache/`, and every subsequent worker reads that report instead of the source. The cache key is the git hash, so it invalidates automatically when code changes.
 
-The token math is concrete. A worker that needs system context (5K) + relevant scout sections (8K) + task spec (2K) runs on 15K tokens. Passing the full scout report instead costs 67K. Across 14 workers, that's 210K vs 938K tokens of input, roughly $0.60 vs $2.65 at current Sonnet pricing, before output or retries.
+The token math is concrete. A worker that needs system context, relevant scout sections, and a task spec runs on about 15K tokens. Passing the full scout report instead costs 67K. Across 14 workers, that's a 4.5× difference in input tokens. The gap compounds with retries.
 
-One tradeoff: the cache is a static snapshot. Mid-run code changes mean stale data. Usually fine for feature work. For pipelines that modify shared files, coordinate explicitly.
+The tradeoff is staleness. The cache is a static snapshot, so mid-run code changes won't be reflected. That's usually fine for feature work, but pipelines that modify shared files need explicit coordination.
 
 ## Prompt caching: how it works, and what breaks it
 
@@ -47,7 +49,7 @@ The harder problem is multi-agent isolation. Each subagent runs as a separate AP
 
 For concurrent agents, spawn them close together so the 5-minute window overlaps across the batch. For sequential pipelines, pass shared context as a file (which lives in the scout cache, persisting across session boundaries) rather than repeating it as a system prompt in each new session.
 
-Model switches are full misses. The cache key includes the model identifier. Switch from Sonnet to Opus mid-pipeline and every cached prompt is invalid. Build pipelines around one model per tier, or accept that cross-tier handoffs reset the caching budget to zero.
+Model switches are full misses because the cache key includes the model identifier. Switch from Sonnet to Opus mid-pipeline and every cached prompt becomes invalid. Build pipelines around one model per tier, or accept that cross-tier handoffs reset the caching budget to zero.
 
 ## Token optimization: maps, ignores, compression
 
@@ -63,7 +65,7 @@ A complementary observation from Willison: agents are remarkably consistent at f
 
 Claude Code loads context in a defined order that determines what's always in working memory and what arrives on-demand. The order matters for placement decisions. Putting the wrong content in the wrong tier wastes budget or loses attention.
 
-**Tier 1, Always loaded**: root `CLAUDE.md` + `@import`s + path-less rules. Every request. Sizing: root under 100 lines, rules 20-50 each, total under 300 lines. Past 200 lines per file, the middle starts degrading. Lost-in-middle at document scale.
+**Tier 1, Always loaded**: root `CLAUDE.md` + `@import`s + path-less rules. Every request. Keep the root under 100 lines, individual rules short, total under 300 lines. Go past that and the middle starts degrading — lost-in-middle at document scale.
 
 **Tier 2, On-demand**: path-scoped rules. Tagged to `/frontend/**`? Only loads when the agent works there. Framework guidance that would distract the API layer stays out.
 
@@ -79,6 +81,6 @@ This tier structure, and the pattern of isolated agents with scoped context, is 
 
 ## Open questions
 
-**When should compaction trigger?** Claude Code's default compaction fires at around 70-80% fill. We've observed instruction failures starting at 40%. The gap represents 30-40% of capacity where rules set early in the session are already unreliable — but the session continues, and nothing signals the degradation. We haven't tested manually triggering compaction at 50% to see whether it recovers compliance, or whether the compaction overhead makes it net negative for short tasks. The experiment is straightforward; we haven't run it.
+**When should compaction trigger?** Claude Code's default compaction fires at 70-80% fill. We've seen instruction failures starting at 40%. That's a wide band where the session continues, rules are already unreliable, and nothing signals the problem. Triggering compaction earlier (say 50%) might recover compliance — or the overhead might make it net negative for short tasks. The experiment is straightforward; we haven't run it.
 
 **Can sequential pipelines warm the cache across session boundaries?** We've measured the 0-cache-read outcome (14 subagents, 700K cache_create, 0 cache_read). There may be a construction — passing exactly the same system prompt bytes plus shared context in a consistent format — that achieves cache hits across back-to-back sessions started within the 5-minute TTL. We've observed the problem systematically; we haven't tested the workaround systematically.

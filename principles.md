@@ -46,11 +46,11 @@ See [Verification](./verification.md).
 
 ### 5. Atomic tasks with context reset
 
-One task → verify → commit → reset → next. No exceptions.
+The pattern is simple: one task, verify, commit, reset, next. No exceptions.
 
 A 106-turn task in Experiment 3 didn't contaminate subsequent tasks. Because we reset between them. Without the reset, errors that slip through review compound in later tasks; the agent tries to correct them and often makes things worse. Effective context degrades well before the nominal limit: complex reasoning can collapse at 10–40% utilization depending on task type. Long sessions don't get more done. They get noisier.
 
-Context reset also defends against provider-side model degradation. When model quality drops silently (as in the April 2026 Opus incident (-67% thinking depth, 80× cost increase), an externalized plan written to disk keeps the task anchored even as the model's own reasoning deteriorates (Experiment 9).
+Context reset also defends against provider-side model degradation. In the April 2026 Opus incident, thinking depth cratered and costs spiked with no warning. But because the plan was written to disk before the degradation hit, the task stayed anchored even as the model's reasoning fell apart (Experiment 9).
 
 Tasks spanning 30+ files should be split into 2–3 subtasks before starting, not mid-session.
 
@@ -66,7 +66,7 @@ See [Self-Improvement](./self-improvement.md).
 
 ## Level 1: minimum viable process (day one)
 
-Three habits that eliminate most failures before you build any pipeline.
+Three habits that cover most failures before you build any pipeline.
 
 **DO / DO NOT / GLOSSARY on every task.** Three lines before the prompt. DO: what to build + when it's done. DO NOT: which files, APIs, and patterns to leave untouched. GLOSSARY: any term that could be interpreted two ways. In the ablation, both consecutive failures traced to missing one of these three. Don't write paragraphs. Write three lines.
 
@@ -76,7 +76,7 @@ Three habits that eliminate most failures before you build any pipeline.
 
 ## Level 2: pipeline (first week)
 
-Separate roles, sequential execution, context reset between tasks.
+Once the basics are solid, add structure: separate roles, sequential execution, and context reset between tasks.
 
 **Scout reads, workers implement.** One exploration pass before any implementation. The scout reads the codebase, writes a structured report, caches it by git commit hash. Workers get the task plus the scout report. Not the full codebase. The orchestrator never reads files directly.
 
@@ -88,7 +88,7 @@ Separate roles, sequential execution, context reset between tasks.
 
 ## Level 3: learning loop (first month)
 
-The agent improves without fine-tuning. Most teams skip this layer entirely.
+At this level the agent starts improving on its own, without fine-tuning. Most teams never get here.
 
 **Extract lessons after every feature.** End of session: what broke, what was unexpectedly hard, what assumption was wrong. Write it down. A cheap model (Sonnet, Haiku) handles this. It's factual summarization. Don't promote yet.
 
@@ -110,7 +110,7 @@ Five failure modes with measured consequences.
 
 **Monster tasks.** 50+ files in one session don't get refactored. They get half-refactored, with the rest hallucinated. Decompose until each task has a verifiable output and a deterministic acceptance test. If you can't write the acceptance test, the task is still too large.
 
-**Trust without verification.** Amazon's 6-hour outage (21K agents, 4 Sev-1 incidents in 90 days) traced to velocity scaling faster than verification. LinearB measured the baseline risk across 8.1M PRs: AI-generated code receives 1.7× more review revisions than human code. Verification isn't process overhead. It's what keeps scale from compounding errors.
+**Trust without verification.** Amazon's outage traced to velocity scaling faster than verification. LinearB measured the baseline risk: AI-generated code receives 1.7× more review revisions than human-written code. Verification isn't process overhead. It's what keeps the pipeline honest.
 
 ## Where we go beyond CC
 
