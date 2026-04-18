@@ -6,7 +6,7 @@ How coding agents improve through language — specs, reviews, lessons, rules �
 
 ## What's here
 
-8 articles (~12,800 words) generated from a research knowledge base of 812 atomic findings across 70+ sessions.
+10 articles (~25,500 words) generated from a research knowledge base of 1,033 atomic findings across 171 sessions.
 
 | Page | About |
 |------|-------|
@@ -17,7 +17,10 @@ How coding agents improve through language — specs, reviews, lessons, rules �
 | [verification](verification.md) | Separate reviewer, multi-model, OTel, Amazon case study |
 | [self-improvement](self-improvement.md) | Memory hierarchy, lesson extraction, closed loop |
 | [principles](principles.md) | 6 principles, 3 maturity levels, anti-patterns |
+| [playbook](playbook.md) | 15 rules — ready-to-apply, tied to principles and experiments |
 | [landscape](landscape.md) | Tools, trends, papers — April 2026 snapshot |
+| [references](references.md) | Full bibliography — papers, repos, people, our experiments |
+| [changelog](changelog.md) | What's new since previous sync for return readers |
 
 ## Evidence levels
 
@@ -29,7 +32,12 @@ How coding agents improve through language — specs, reviews, lessons, rules �
 
 ## How it was built
 
-Articles are generated from a private KB (`meta-programming-kb/`, 812 bullets, 1647 lines across 12 tier files) using a doc-editor pipeline. The KB is internal research memory — raw findings, process notes, source mappings. These articles are the reader-facing product extracted from that memory.
+Articles are generated from a private KB (`meta-programming-kb/`, 1,033 bullets, 2,411 lines across 12 tier files) using a doc-editor pipeline. The KB is internal research memory: raw findings, working specs, engineering backlogs, process notes, source mappings. These articles are the reader-facing product extracted from that memory.
+
+Three-layer memory architecture:
+- **tier1-core** (12KB) — always-loaded expert memory: thesis, proven findings, principles, active questions
+- **tier2-*** (4–18KB each) — topic deep-dives: spec-driven, verification, self-improvement, memory systems, orchestration, security, experiments, context-engineering, evaluation
+- **tier3-*** — appendices: landscape snapshot, tools catalog
 
 Research tools: [Pi coding agent](https://github.com/nicobailon/pi-subagents), Exa API, content pipeline (Twitter/GitHub), Gemini search.
 
