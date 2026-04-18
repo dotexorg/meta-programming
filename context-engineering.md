@@ -16,7 +16,9 @@ The practical implication: a 200K-token window doesn't give you 200K tokens of r
 
 The wrong instinct is to put everything in the system prompt and let the model sort it out. Information lands better when it arrives close to the moment the agent actually needs it.
 
-Our knowledge base has 429 bullets, roughly 80-100K tokens. Loading the full KB into every session would consume half the window before any work started, and most of it would land in the lost-in-middle zone anyway. Instead, we load a synthesis file (~8KB) as the always-on layer and expose the full bullet store as a searchable tool. The model requests what it needs. Irrelevant material never enters context.
+Our knowledge base has grown past 1,000 bullets, roughly 180–220K tokens of raw archive. Loading it all into every session would consume the entire window before any work started, and most would land in the lost-in-middle zone anyway. The architecture splits the material across four roles. The **raw archive** (`meta.json`) is searchable via a tool call, never loaded whole. A **curated core** (`tier1-core.md`, ~45KB) — thesis, principles, our own experiments — is the actual always-load layer. **Topic tiers** (`tier2-*.md`, 10–18KB each) load on-demand when the task touches that area. A **synthesis doc** sits between the raw KB and the tiers as a staging artifact — it collects narrative during research sessions, gets drained into the tier docs during sync, and is not part of the agent's runtime context.
+
+The model requests what it needs from the tiers or searches the raw store directly. Irrelevant material never enters context. The same pattern generalises: one small always-on layer with the core thesis, domain tiers by topic, everything else searchable.
 
 The four-bucket strategy formalizes this pattern across any system:
 
@@ -60,6 +62,14 @@ Model switches are full misses because the cache key includes the model identifi
 Community compression tools have promising reported numbers but we haven't benchmarked them ourselves: Tilth CLI claims 40% input reduction, RTK (12K GitHub stars) claims 60-90% output compression, Cozempic claims 23% history reduction. They're reportedly stackable. One caution: output compression that drops intermediate reasoning can force the agent to regenerate work it already did — compounding the artifact trail problem rather than solving it.
 
 A complementary observation from Willison: agents are remarkably consistent at following existing code patterns. A clean, idiomatic codebase is itself compressed context. One good example does the work of a paragraph of style instructions. If the first file in a pattern is wrong, expect the pattern to propagate. Fix the example, not just the rule.
+
+## The AGENTS.md cliff
+
+The intuition that more rules produce better behavior is wrong past a specific threshold, and the threshold is documented. A 2026 paper on AGENTS.md (arxiv 2602.11988) measured SWE-bench success rates against context file size: success declines past **500 lines**, and the drop is a cliff rather than a gradual slope. The sweet spot the authors identify sits at 200–300 lines of actionable rules. The failure mode they name: "not giving the model a mental model, giving it a compliance checklist." At checklist length the model stops reading and starts skipping, visibly enough to move benchmark scores by measurable amounts.
+
+Adherence to context file rules sits around **70% even under the budget**. Practitioners converged on this number independently through session analysis; the paper's result lines up. The implication for anything safety-critical: if a rule must hold every time ("never push to main," "always run tests before commit"), a context file is the wrong place for it. That's a hook. The context file is advisory; hooks are deterministic.
+
+What this means for our own structure: the 200-line target in CLAUDE.md isn't an aesthetic preference but a measured ceiling. Past it, every added rule increases the risk that existing rules stop firing. Rule retirement matters as much as rule addition — the `adelaidasofia/claude-performance` loop (measure, add rule when metric drops, retire rule when metric stabilises without it) is the pattern that keeps the file under the cliff.
 
 ## How Claude Code assembles context
 

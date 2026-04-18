@@ -67,13 +67,15 @@ We measured this directly. In a controlled A/B test, the same architectural prob
 
 Layer 1 explains why all production agent systems converge on human-readable markdown: AGENTS.md, CLAUDE.md, SKILL.md, DECISIONS.md, MEMORY.md. Markdown is version-controlled, readable by humans, parseable by agents, portable across model versions. Anthropic's "Building Agents with Skills" organizes persistent behavioral configuration as composable markdown files rather than model fine-tunes. Not a coincidence. It's the natural format for shared knowledge that both sides can read and edit.
 
-### Layer 2: Personal Intent Language
+### Layer 2: Intent Form Selection
 
-A language that lives between natural language and formal specification. When you say "need a webhook worker," a system with a strong Layer 2 already knows your stack, your naming conventions, your error-handling patterns, your deployment constraints. You don't repeat context — the language carries it.
+There's no single canonical form for expressing intent to an agent. There's a set of them, each with its own strengths: natural language for throwaway exploration, `AGENTS.md` for cross-session conventions, `SKILL.md` for reusable procedures, `DO/DO NOT/GLOSSARY` for boundary-sensitive tasks, hooks for non-negotiable gates. Layer 2 is the practice of picking the right form for the task — not inventing a new language.
 
-Microsoft Research RiSE named the formalization of this space a grand challenge for 2026. Martin Fowler's progression maps the maturity curve: spec-first → spec-anchored → spec-as-source, with increasing precision at each level. The tickets-are-prompts insight makes it concrete: a ticket written as a precise operational policy is already an agent instruction. A `DO NOT` is a contract clause. A `GLOSSARY` is a type system shared between engineer and agent.
+The choice tracks three dimensions. Complexity: a one-line fix runs fine on natural language; a multi-file refactor doesn't. Reliability requirement: a failing test before a release blocker belongs in a hook, not in a convention document agents follow 70% of the time. Horizon: a one-off exploration doesn't need a spec; a project contract does. Getting this wrong in either direction costs: under-specified tasks fail the way Experiment 2 did (wandering scope, wrong intent); over-specified tasks hit the AGENTS.md cliff (context files past 500 lines measurably reduce success rates).
 
-We verified the constraint layer specifically. In an ablation study, we stripped DO/DON'T sections from a structured spec and ran identical tasks. Without the constraint language, the agent failed in patterns identical to raw prompting — wandering scope, incorrect assumptions about naming, missing edge-case handling. The DO/DON'T structure isn't documentation; it's a guard rail the agent actually uses.
+The constraint language — `DO NOT`, `GLOSSARY`, explicit acceptance criteria — is the form that most consistently moves outcomes. A 2026 controlled experiment quantified it: spec detail dropped task pass rates from 89% to 56% in single-agent setups and from 58% to 25% in multi-agent. A full spec alone at the merge point recovered the 89% ceiling. An AST-based conflict detector added zero. Specs do the heavy lifting; reconciliation infrastructure does not.
+
+The academic framing arrived at the same answer from three directions. Microsoft Research RiSE named Intent Formalization a grand challenge, with a spectrum from lightweight tests to functional specs to DSL synthesis. Martin Fowler's progression (spec-first → spec-anchored → spec-as-source) maps the maturity curve. A formal Context Engineering paper in April 2026 named five roles a complete context package needs to carry — Authority, Exemplar, Constraint, Rubric, Metadata — and measured that a structured package raised first-pass acceptance from 32% to 55%. DO/DO NOT/GLOSSARY handles three of those five; the other two (working code samples and explicit success criteria) are where most specs silently underperform.
 
 [See Specification →](./specification.md)
 
@@ -93,7 +95,7 @@ The compounding mechanism is what distinguishes Layer 3 from simple iteration. E
 
 ## The progression: from vibe coding to meta-programming
 
-This documentation is built from 70+ research sessions and 9 controlled experiments: A/B tests, ablation studies, end-to-end pipeline runs. The headline finding: structured process beat raw context injection on every measured dimension — cost ($6.63 vs $9.99), quality, and first-attempt pass rate.
+This documentation is built from 70+ research sessions, 10 controlled experiments, and a knowledge base of roughly 1,000 atomic findings: A/B tests, ablation studies, end-to-end pipeline runs, model evaluation. The headline finding: structured process beat raw context injection on every measured dimension — cost ($6.63 vs $9.99), quality, and first-attempt pass rate.
 
 The three most recent experiments extended the picture. An edit tool investigation traced a persistent error pattern to our own extension, not the platform. Post-fix benchmark: 7.1% errors, all model mistakes, all self-recovering in one retry. A model evaluation found that thinking level acts as a compliance-to-conviction dial: higher thinking produces conviction (holding position under pushback) rather than compliance. A distinct mode emerged: the agent says no while providing the implementation anyway. Soft sycophancy. Not caught by standard benchmarks. A documented degradation incident confirmed that the structured pipeline resists provider-side quality shifts by design: when model reasoning degrades, the externalized plan compensates.
 

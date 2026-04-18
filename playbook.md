@@ -10,7 +10,9 @@ Examples use Claude Code, but most rules apply to any coding agent — Cursor, C
 
 ### 1. Keep CLAUDE.md under 200 lines
 
-The model can follow roughly 200 rules at a time. The system prompt already consumes about 50, which leaves you around 150. A 500-line CLAUDE.md doesn't make the agent smarter — it makes it selectively deaf. Research across multiple agents and LLMs confirms that context files over 500 lines actively reduce success rates.
+The model can follow roughly 200 rules at a time. The system prompt already consumes about 50, which leaves you around 150. A 500-line CLAUDE.md doesn't make the agent smarter — it makes it selectively deaf. Research across multiple agents and LLMs confirms that context files over 500 lines actively reduce success rates — it's a cliff drop, not gradual.
+
+And even under the budget, adherence isn't 100%. Context file instructions are followed roughly **70% of the time**. For rules that must hold in every session ("never push to main", "always run tests before commit"), don't rely on the file. Use hooks (see Rule 15). The file is advisory; hooks are deterministic.
 
 What belongs in there: build commands, test commands, naming conventions, architectural constraints, forbidden patterns. What doesn't: aspirational guidelines, style philosophy, anything you'd put in a README for humans. `use typescript strict mode` is a rule. `write clean, maintainable code` is noise.
 
@@ -64,6 +66,8 @@ The single highest-leverage habit. Three lines that eliminate most failures befo
 
 In a direct test, two consecutive failures without a spec — both deterministic, meaning they'd have happened every time. Adding `DO NOT modify classifyTicket` prevented both. Three words.
 
+Controlled academic work puts numbers on it. A 2026 paper tested 4 spec detail levels across 51 class-generation tasks. Full spec got 89% pass rate. Bare function signatures only: 56%. For multi-agent decomposition the drop was steeper (58% → 25%). The recovery is counterintuitive: fancy conflict-detection tooling adds nothing. Just restoring the full spec at merge time recovers the 89% ceiling. **Specification is both the cause of failure and the sufficient instrument of recovery** — so invest in spec completeness upfront, not reconciliation infrastructure later.
+
 See [Specification](./specification.md) for the full framework.
 
 ### 5. Plan first, restate, then code
@@ -71,6 +75,8 @@ See [Specification](./specification.md) for the full framework.
 "Obvious on big features, overkill on small ones" — except skipping the plan on small features is exactly where bugs hide, because nobody reviews what seemed trivial.
 
 Write the plan. Pressure-test it: "what breaks if we do this? what are we assuming?" Then before any implementation, ask the agent to restate what it understood the task to be. Often the model misinterprets something, or you left out a detail that forced it to assume. This one step exposes blindspots before a single line of code is written.
+
+This isn't fussy process. Intent misalignment is the single largest category of production LLM failures — roughly **32% of all dissatisfactory responses**, ahead of hallucination and refusal combined. Multi-turn conversations make it worse: around 30% performance drop vs single-turn. The classic pattern is the XY problem at scale: user asks for Y ("echo the last 3 characters of a filename"), the model does exactly that, nobody asks whether the actual need was the file extension. Production LLMs are RLHF'd to be helpful (answer questions) and productive (don't clarify) — the training signal points directly at the intent gap. Restate-back is the cheapest counter-measure.
 
 If the agent proposes something you don't understand during planning (barrel re-exports, unnecessary abstractions), question it. In our testing, an anti-pattern was caught and removed at spec review that would have shipped to production without it.
 
@@ -104,6 +110,8 @@ The thinking budget is what the model spends on reasoning before it starts writi
 But more thinking isn't always better. At very high levels, the model can over-generate: verbose output, unnecessary abstractions, over-engineered solutions to simple problems. It also shifts from compliance toward conviction — the model may push back on your rules if it "thinks" they're wrong. The sweet spot depends on task complexity: high thinking for architecture and debugging, medium for routine implementation.
 
 When you notice quality fluctuating across sessions (same prompt, noticeably worse output), it may be provider-side: GPU load, checkpoint rotation, or A/B testing can all reduce the thinking budget silently. Extended thinking keywords override that floor and restore the baseline.
+
+Failure modes on hard reasoning tasks cluster into four states: `ON_TRACK` (making progress), `LOOPING` (revisiting arguments without advancement), `DRIFTING` (topical relevance declining), and `STUCK` (shortened responses, visible uncertainty). Academic work (Cognitive Companion, IBM, April 2026) puts the degradation rate at roughly 30% of hard tasks for smaller models. If the agent looks like it's in any of the latter three states, don't try to argue it out — reset the session. That's what Rule 7 already says, but now there's a name for what you're observing.
 
 ### 9. Verify before you move on
 
@@ -162,6 +170,8 @@ If your tool supports hooks (Claude Code has `PreToolUse`, `PreCompact`, `Stop`)
 One CI gate catches more bugs than a thousand lines of prompt instructions. If you find yourself adding the same rule to CLAUDE.md for the third time and the agent still ignores it — the rule doesn't belong in CLAUDE.md. It belongs in your tooling.
 
 This is the principle GitLab's AI playbook calls "constraints as multipliers." And it's the path from using agents to engineering with them.
+
+There's also a measurement version of this principle. One open-source tool (`claude-performance`) ships the full loop: reads your session logs, computes six effectiveness metrics (one-shot edit rate, agent spawn distribution, model mix, hook fire rates, activity distribution, project allocation). When a metric falls below target, it writes a behavioral rule into CLAUDE.md. The next week it re-measures. If the metric moved, the rule stays. If it held at target for weeks without the rule firing, the rule retires. "A static rule is a wish. A measured rule is a system." The rule lifecycle — add, measure, retire — is what separates a growing codebase of instructions from a codebase of instructions that actually works.
 
 ---
 
