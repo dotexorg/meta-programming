@@ -2,11 +2,9 @@
 
 <img alt="image" src="assets/index_hero.avif" />
 
-How coding agents improve through language — specs, reviews, lessons, rules — without touching model weights.
+How coding agents improve through language (specs, reviews, lessons, rules) without touching model weights.
 
 ## What's here
-
-8 articles (~12,800 words) generated from a research knowledge base of 812 atomic findings across 70+ sessions.
 
 | Page | About |
 |------|-------|
@@ -17,7 +15,10 @@ How coding agents improve through language — specs, reviews, lessons, rules �
 | [verification](verification.md) | Separate reviewer, multi-model, OTel, Amazon case study |
 | [self-improvement](self-improvement.md) | Memory hierarchy, lesson extraction, closed loop |
 | [principles](principles.md) | 6 principles, 3 maturity levels, anti-patterns |
+| [playbook](playbook.md) | 15 rules tied to principles and experiments |
 | [landscape](landscape.md) | Tools, trends, papers — April 2026 snapshot |
+| [references](references.md) | Full bibliography — papers, repos, people, our experiments |
+| [changelog](changelog.md) | What's new since previous sync |
 
 ## Evidence levels
 
@@ -29,9 +30,7 @@ How coding agents improve through language — specs, reviews, lessons, rules �
 
 ## How it was built
 
-Articles are generated from a private KB (`meta-programming-kb/`, 812 bullets, 1647 lines across 12 tier files) using a doc-editor pipeline. The KB is internal research memory — raw findings, process notes, source mappings. These articles are the reader-facing product extracted from that memory.
-
-Research tools: [Pi coding agent](https://github.com/nicobailon/pi-subagents), Exa API, content pipeline (Twitter/GitHub), Gemini search.
+Articles are generated from a private research KB using a doc-editor pipeline. Research tools: [Pi coding agent](https://github.com/nicobailon/pi-subagents), Exa API, content pipeline (Twitter/GitHub), Gemini search.
 
 ## Related
 

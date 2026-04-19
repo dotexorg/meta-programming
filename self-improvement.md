@@ -92,9 +92,27 @@ Extract liberally within sessions. Promote conservatively across sessions. Demot
 
 This is [Principle 6](./principles.md). The one principle that touches all the others, because without the feedback loop, none of the others compound.
 
+## Chase's three learning layers
+
+Harrison Chase (LangChain) published a framework in April 2026 that sits orthogonal to LMP's form-selection view. Where LMP asks *what form* an artefact takes (spec, skill, rule, hook), Chase asks *where in the stack* the learning lives. Three layers:
+
+**Model** (weights). Changes here are durable and expensive. Catastrophic forgetting, label cost, multi-week cycles. Most of the industry's "continual learning" research lives here.
+
+**Harness** (code plus always-present instructions). Claude Code, Pi, any orchestration layer an agent is embedded in. Changes here affect every session under that harness without touching a weight. Stanford's Meta-Harness paper measured a 6× performance gap on the same underlying model by changing only the scaffolding.
+
+**Context** (CLAUDE.md, skills, mcp.json, session memory). Changes here are per-project or per-session, cheapest, most specific. This is where 90% of practitioner self-improvement actually happens, and where our own KB / rule-retirement loops live.
+
+Chase explicitly maps OpenClaw as "Pi plus some other scaffolding" — harness layer, not a model fork. Most conversations about "making the agent better" collapse all three into the model layer and then feel stuck. Pulling them apart is what makes compounding visible: harness gains transfer across projects, context gains stay local, model gains come last and rarely.
+
+Two downstream points from the same post. Memory updates split into *hot-path* (running while the agent is on the core task — explicit prompt or self-decision) and *offline* (batch job over recent traces). CC's `extractMemories` is hot-path; `autoDream` is offline. Our KB extraction is offline-only, which means signal that needs to act inside a session doesn't land until too late. Traces are the substrate all three layers share — the investment in `trajectory.py` isn't tactical, it's the input format for every other loop.
+
 ## Practitioner patterns
 
 Self-improvement moved from research into production across 2025-2026. Three deployments show what the pattern looks like at different scales and from different angles.
+
+**Measurement-driven CLAUDE.md with rule retirement.** The `adelaidasofia/claude-performance` tool shipped in April 2026 with the full loop most rule-management systems skip: read session JSONLs, compute six effectiveness metrics (one-shot edit rate, agent spawn distribution, model mix, hook fire rates, activity distribution, project allocation), write a behavioral rule into CLAUDE.md when a metric falls below target, re-measure the next week, **retire the rule when the metric stabilises without it**. Add → measure → retire. The retire step is the one that keeps the file under the AGENTS.md cliff (see [context-engineering](./context-engineering.md)). The tagline sits right: *"A static rule is a wish. A measured rule is a system."*
+
+**Pattern observation daemon.** The Homunculus plugin observes user behavior in the background and auto-writes skills, hooks, or commands when it detects repetitive patterns. Skills fire probabilistically (50–80% rate), commands fire deterministically. Per-project state lives under `.claude/homunculus/`. The pattern matters more than the specific tool: self-improvement no longer requires a "now I'm extracting lessons" mode switch — it runs as ambient infrastructure.
 
 **Structured error logging.** Rory Teehan's system captures three fields per error: what happened, why it happened, what should have happened instead. When the same pattern appears three or more times, a rule synthesizes and promotes automatically. After two weeks: 13 error patterns became 13 active rules, backed by 211 indexed memories. The notable observation: learned rules carry more weight than initial static instructions. They're treated as empirically validated rather than author-asserted.
 
@@ -111,6 +129,8 @@ Self-improvement moved from research into production across 2025-2026. Three dep
 **skill-loop** runs a four-stage programmatic cycle against any skill file: observe → inspect → amend → evaluate. Exposed via MCP, so improvement can trigger automatically on any event rather than waiting for session end.
 
 Three independent self-improvement projects (`skill-loop`, `selfwrite`, and a third loop-based tool) shipped in the same week in March 2026 without coordination. Each arrived at the same closed-loop architecture independently. That convergence is its own data point.
+
+By April the same pattern showed up at a finer granularity. WebXSkill (Microsoft + UNC, arxiv 2604.13318) formalises a skill as *parameterized action plus natural-language guidance*. Not a procedure to execute, not pure prose — the combination. Tested on web-agent tasks: +9.8 points on WebArena, +12.9 on WebVoyager against baseline. This is Layer 2 form selection made concrete. A skill isn't "NL that happens to be structured"; it's an explicit form with a measured performance delta over either extreme.
 
 ## Memory scoring
 

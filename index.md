@@ -30,7 +30,7 @@ How you structure an agent's memory, specs, and feedback loops matters more than
 
 The data landed before the theory. LinearB studied 8.1 million pull requests. The headline: AI-generated code ships faster but breaks more. More issues, longer review queues, lower acceptance rates. Developers _feel_ 20% faster; tasks actually take 19% longer end-to-end. Creation accelerated. Verification didn't.
 
-The natural response is to wait for a better model. Stanford's 2026 Meta-Harness study suggests that's the wrong fix. They took the same model, changed only the scaffolding around it, and measured a **6× performance gap** on the same benchmark. Particula ran a similar test on SWE-bench: same model, stock scaffold scored 42%, rebuilt scaffold scored 78%. The model didn't change. The process around it did — and that was the difference between failing and passing.
+The natural response is to wait for a better model. Stanford's 2026 Meta-Harness study suggests that's the wrong fix. They took the same model, changed only the scaffolding around it, and measured a **6× performance gap** on the same benchmark. Particula ran a similar test on SWE-bench: same model, stock scaffold scored 42%, rebuilt scaffold scored 78%. The model didn't change. The process around it did, and that was the difference between failing and passing.
 
 This is the evolutionary pressure. It runs in three stages.
 
@@ -48,7 +48,7 @@ The academic framing arrived independently. Tsinghua's March 2026 NLAH paper (Na
 
 Stanford's DSPy arrived at the same idea from the optimization side: stop hand-writing prompts, search the language space automatically. Treat the prompt as code that can be tested, scored, and improved by the system itself. Same underlying claim: language is the parameter space, and it can be engineered.
 
-The practical consequence: **natural language is code.** A spec with a `DO NOT` clause is a constraint. A `GLOSSARY` is a type system. A `LESSONS.md` is a feedback loop. A pipeline definition is a program. The difference between a well-written AGENTS.md and a poorly-written one is the difference between a correct program and a buggy one — the compiler is just an LLM.
+The practical consequence: **natural language is code.** A spec with a `DO NOT` clause is a constraint. A `GLOSSARY` is a type system. A `LESSONS.md` is a feedback loop. A pipeline definition is a program. The difference between a well-written AGENTS.md and a poorly-written one is the difference between a correct program and a buggy one. The compiler is just an LLM.
 
 This convergence is measurable at scale. A Bamberg/Heidelberg systematic analysis of 2,926 repositories across Claude Code, GitHub Copilot, Cursor, Gemini, and Codex found independent convergence on the same pattern: linguistic configuration files (CLAUDE.md, AGENTS.md, COPILOT-INSTRUCTIONS.md) as the primary mechanism for shaping agent behavior. Pydantic took it furthest: they extracted 4,668 PR review comments and distilled them into roughly 150 AGENTS.md rules. Implicit engineering judgment, compiled into explicit agent instructions.
 
@@ -62,19 +62,21 @@ LMP has structure. Three layers, each dependent on the one below.
 
 Not documentation. Not memory. A working model of what the agent knows, how it knows it, where it fails, and what constraints it operates under. This is what separates a generic model from a system shaped by a specific engineer's context.
 
-The performance difference is real. The ERL paper showed that agents operating with heuristics extracted from prior trajectories outperformed ReAct baselines by **+7.8%** on standard benchmarks. Their finding: _"Heuristics provide more transferable abstractions than few-shot prompting."_ Persistent structured knowledge outperforms in-context examples — the format matters.
+The performance difference is real. The ERL paper showed that agents operating with heuristics extracted from prior trajectories outperformed ReAct baselines by **+7.8%** on standard benchmarks. Their finding: _"Heuristics provide more transferable abstractions than few-shot prompting."_ Persistent structured knowledge outperforms in-context examples. The format matters.
 
-We measured this directly. In a controlled A/B test, the same architectural problem ran through a generic Claude Sonnet instance and through an agent with a structured knowledge base. The generic agent asked for a code map. The KB agent flagged the exploration-versus-exploitation paradox, with evidence from prior sessions, before writing a line of code. The difference isn't code quality. It's the level of reasoning the agent brings before touching implementation. The broader practitioner community confirmed the pattern independently — Karpathy's framing of personal KB-building via LLMs named the same mechanism: the KB is the primary artifact, not the code it produces.
+We measured this directly. In a controlled A/B test, the same architectural problem ran through a generic Claude Sonnet instance and through an agent with a structured knowledge base. The generic agent asked for a code map. The KB agent flagged the exploration-versus-exploitation paradox, with evidence from prior sessions, before writing a line of code. The difference isn't code quality. It's the level of reasoning the agent brings before touching implementation. The broader practitioner community confirmed the pattern independently. Karpathy's framing of personal KB-building via LLMs named the same mechanism: the KB is the primary artifact, not the code it produces.
 
 Layer 1 explains why all production agent systems converge on human-readable markdown: AGENTS.md, CLAUDE.md, SKILL.md, DECISIONS.md, MEMORY.md. Markdown is version-controlled, readable by humans, parseable by agents, portable across model versions. Anthropic's "Building Agents with Skills" organizes persistent behavioral configuration as composable markdown files rather than model fine-tunes. Not a coincidence. It's the natural format for shared knowledge that both sides can read and edit.
 
-### Layer 2: Personal Intent Language
+### Layer 2: Intent Form Selection
 
-A language that lives between natural language and formal specification. When you say "need a webhook worker," a system with a strong Layer 2 already knows your stack, your naming conventions, your error-handling patterns, your deployment constraints. You don't repeat context — the language carries it.
+There's no single canonical form for expressing intent to an agent. There's a set of them, each with its own strengths: natural language for throwaway exploration, `AGENTS.md` for cross-session conventions, `SKILL.md` for reusable procedures, `DO/DO NOT/GLOSSARY` for boundary-sensitive tasks, hooks for non-negotiable gates. Layer 2 is the practice of picking the right form for the task, not inventing a new language.
 
-Microsoft Research RiSE named the formalization of this space a grand challenge for 2026. Martin Fowler's progression maps the maturity curve: spec-first → spec-anchored → spec-as-source, with increasing precision at each level. The tickets-are-prompts insight makes it concrete: a ticket written as a precise operational policy is already an agent instruction. A `DO NOT` is a contract clause. A `GLOSSARY` is a type system shared between engineer and agent.
+The choice tracks three dimensions. Complexity: a one-line fix runs fine on natural language; a multi-file refactor doesn't. Reliability requirement: a failing test before a release blocker belongs in a hook, not in a convention document agents follow 70% of the time. Horizon: a one-off exploration doesn't need a spec; a project contract does. Getting this wrong in either direction costs: under-specified tasks fail the way Experiment 2 did (wandering scope, wrong intent); over-specified tasks hit the AGENTS.md cliff (context files past 500 lines measurably reduce success rates).
 
-We verified the constraint layer specifically. In an ablation study, we stripped DO/DON'T sections from a structured spec and ran identical tasks. Without the constraint language, the agent failed in patterns identical to raw prompting — wandering scope, incorrect assumptions about naming, missing edge-case handling. The DO/DON'T structure isn't documentation; it's a guard rail the agent actually uses.
+The constraint language (`DO NOT`, `GLOSSARY`, explicit acceptance criteria) is the form that most consistently moves outcomes. A 2026 controlled experiment quantified it: spec detail dropped task pass rates from 89% to 56% in single-agent setups and from 58% to 25% in multi-agent. A full spec alone at the merge point recovered the 89% ceiling. An AST-based conflict detector added zero. Specs do the heavy lifting; reconciliation infrastructure does not.
+
+The academic framing arrived at the same answer from three directions. Microsoft Research RiSE named Intent Formalization a grand challenge, with a spectrum from lightweight tests to functional specs to DSL synthesis. Martin Fowler's progression (spec-first → spec-anchored → spec-as-source) maps the maturity curve. A formal Context Engineering paper in April 2026 named five roles a complete context package needs to carry (Authority, Exemplar, Constraint, Rubric, Metadata) and measured that a structured package raised first-pass acceptance from 32% to 55%. DO/DO NOT/GLOSSARY handles three of those five; the other two (working code samples and explicit success criteria) are where most specs silently underperform.
 
 [See Specification →](./specification.md)
 
@@ -94,13 +96,13 @@ The compounding mechanism is what distinguishes Layer 3 from simple iteration. E
 
 ## The progression: from vibe coding to meta-programming
 
-This documentation is built from 70+ research sessions and 9 controlled experiments: A/B tests, ablation studies, end-to-end pipeline runs. The headline finding: structured process beat raw context injection on every measured dimension — cost ($6.63 vs $9.99), quality, and first-attempt pass rate.
+Structured process beat raw context injection on every measured dimension: cost ($6.63 vs $9.99 per task), quality, and first-attempt pass rate. Ten controlled A/B tests, same codebase, same task.
 
 The three most recent experiments extended the picture. An edit tool investigation traced a persistent error pattern to our own extension, not the platform. Post-fix benchmark: 7.1% errors, all model mistakes, all self-recovering in one retry. A model evaluation found that thinking level acts as a compliance-to-conviction dial: higher thinking produces conviction (holding position under pushback) rather than compliance. A distinct mode emerged: the agent says no while providing the implementation anyway. Soft sycophancy. Not caught by standard benchmarks. A documented degradation incident confirmed that the structured pipeline resists provider-side quality shifts by design: when model reasoning degrades, the externalized plan compensates.
 
 External evidence confirms the same structure: LinearB's 8.1M-PR dataset, Stanford's Meta-Harness results, Tsinghua's NLAH paper, the Bamberg/Heidelberg repository analysis. All arrived independently. All confirmed the same structural conclusions. Every major claim is backed by evidence documented in our [References](references.md).
 
-Velocity scaled. Verification didn't. Amazon mandated Kiro across 21K agents, laid off 30K reviewers, then hit 4 Sev-1 incidents in 90 days — a 6-hour outage, 6.3M lost orders.
+Velocity scaled. Verification didn't. Amazon mandated Kiro across 21K agents, laid off 30K reviewers, then hit 4 Sev-1 incidents in 90 days: a 6-hour outage, 6.3M lost orders.
 
 **Phase 3: Meta-programming.** The agent's operating context (memory, specs, rules, feedback loops) becomes the primary engineering artifact. Change the harness, not the model. Stanford proved this in March 2026: same LLM, different scaffolding, SOTA results. SWE-bench: custom scaffolding alone adds +10%. Same model underneath.
 
@@ -108,7 +110,7 @@ You can't delegate your way to a better agent. You have to build the system arou
 
 Writing specs, structuring memory, and encoding feedback isn't prep work you do before the real engineering starts. It is the engineering.
 
-LMP formalizes this into three layers (next section). The industry is converging on the same idea without coordinating. 60,000 repos now ship AGENTS.md — a cross-tool standard for agent instructions under the Linux Foundation. GitHub's spec-kit hit 79K stars: "the lingua franca of development moves to a higher level, and code is the last-mile approach."
+LMP formalizes this into three layers (next section). The industry is converging on the same idea without coordinating. 60,000 repos now ship AGENTS.md, a cross-tool standard for agent instructions under the Linux Foundation. GitHub's spec-kit hit 79K stars: "the lingua franca of development moves to a higher level, and code is the last-mile approach."
 
 Academia named it. Microsoft Research: "Intent Formalization," a grand challenge. Tsinghua's NLAH went further: harness behavior externalized as a portable executable artifact, independent of the model underneath. DSPy treats prompts as learnable parameters and optimizes them automatically. Prompts as code. Literally.
 

@@ -14,6 +14,8 @@ The cost surfaces fast at scale. One engineering organization rolled out agents 
 
 At the individual level, the gap between perceived and measured speed is equally stark. Developers reported feeling 20% faster using AI tools. They were actually 19% slower. The dominant cause being time spent reviewing and correcting AI output. The speed gain went to generation. The time debt went to verification.
 
+A February 2026 follow-up (arxiv 2602.20292) sharpened the picture. Sixteen developers forecast a +24% speedup before the measurement started. Their actual outcome: −19%. A 43-percentage-point calibration error between belief and measurement. The point isn't that AI tools are slow. It's that internal sense of productivity is orthogonal to productivity. Teams that make decisions based on how fast the work *feels* are making decisions against the measurement.
+
 ## Deterministic checks first
 
 The cheapest verification is automated. Run `tsc --noEmit`, your linter, and your test suite before any LLM review token is spent. These catch a large class of errors in milliseconds, with no hallucination risk, for free. They belong at the front of every pipeline.
@@ -45,6 +47,14 @@ Running the same model twice on the same artifact means the same blind spots, tw
 We tested this across 133 cycles and 42 development phases with four models in strict isolation — no model saw another's output. The specialization was consistent: GPT caught Python idioms and security holes, while Claude caught reasoning chains and architecture drift. One race condition in an async handler only appeared through the multi-model pass; neither model found it alone across multiple individual reviews.
 
 This is infrastructure now. A `codex-plugin` for Claude Code runs GPT-based review inside a Claude-driven pipeline. Cross-model, officially endorsed by OpenAI. Mozilla's Star Chamber fans out to multiple providers for consensus. Practical split: Claude for architecture (structure, coupling, boundaries). GPT for security (injection, error handling, language footguns). They don't see each other's output. Independence is the point.
+
+## Four cognitive states in a stuck agent
+
+The "agent is looping" intuition has been formalised. An April 2026 paper (Cognitive Companion, IBM Dublin) names four states a reasoning agent can be in: `ON_TRACK` (making progress), `LOOPING` (revisiting arguments without advancement), `DRIFTING` (relevance declining), `STUCK` (shortened responses, visible uncertainty). The last three are distinct enough that different responses apply to each. Looping needs a session reset. Drifting needs a re-read of the spec. Stuck often needs human help.
+
+Two detector architectures exist. An LLM-based companion runs a short structured prompt every couple of turns (temperature 0.3, ~80 tokens) that classifies the state of the main agent. It cuts repetition by 52–62% at ~11% overhead, and it works against any model you can call over an API. A probe-based companion trains a linear classifier on hidden states at layer 28 of the reasoning model, achieves AUROC 0.84 with zero runtime overhead, and requires open-weight models (Gemma, Llama, Qwen). The probe is cheaper but unavailable through the Anthropic API; the LLM companion is what we can actually deploy today.
+
+The existing production baselines are rule-based and miss the semantic cases. LangGraph's `recursion_limit` is a counter. AutoGen composes termination on message count, token budget, and pattern match. OpenHands' `StuckDetector` implements five heuristics. All catch the mechanical loops. None catch drift, where the agent is making progress in a direction that's no longer the right direction. A model-based detector catches both, which is why the LLM-companion pattern is the one worth pulling into production pipelines next.
 
 ## Adversarial probes over courtesy checks
 

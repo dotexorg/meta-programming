@@ -113,9 +113,27 @@ The decision:
 
 Verification is often where the model breaks down, not execution. Augment Code's single-writer rule for hotspot files and sequential merge strategy reflects this: when verification is the bottleneck, adding more parallel execution makes things worse, not better. Azure's multi-agent taxonomy names five patterns (Sequential, Concurrent, Group Chat, Handoff, Magentic) and applies the same rule across all of them: use the minimum complexity that solves the problem reliably.
 
+## Parallel decomposition has a measured tax
+
+The case for sequential workers sharing a spec, rather than parallel workers coordinating through messages, now has a number on it.
+
+A controlled 2026 experiment on 51 class-generation tasks held the spec constant and varied the execution shape. Single-agent passed at 89%. Two-agent parallel decomposition of the same class — one worker building the list-based half, another the dict-based half — dropped to 58%. That's a 31-point gap attributable entirely to running the work in parallel on shared internal state. The decomposition is additive: 16 points from coordination overhead (two workers making independent decisions that had to be reconciled), 11 points from information asymmetry (each worker seeing a subset of the context). Running an AST-level conflict detector at 97% precision between the workers moved the score by zero. What recovered the ceiling was restoring the full spec to the merging agent at the end.
+
+The scope of this finding matters. It's about parallel decomposition of one tightly-coupled artefact with shared internal state. It doesn't apply to independent subsystems, sequential pipelines, or role-specialised agents (scout, worker, reviewer) that don't compete for the same state. Our pipeline is structurally safe from this failure mode — workers hand off artefacts instead of coordinating on shared memory. Teams considering parallel workers on the same module should price in the 16-point floor. "Agent teams" as currently marketed by several tools are parallel decomposition with a better name, and the measured cost lands in the same place.
+
+The community has noticed. The common observation on the Claude Code subreddit: agent teams are "expensive subagents with better marketing." Communication overhead overwhelms the team leader's context window, idle notifications accumulate, nothing beats simple subagent spawning for current implementations. That matches our architecture: sequential subagents plus a shared spec artefact beats a parallel team coordinating through messages.
+
+## The pipeline's advantage shrinks as models improve
+
+A large trajectory study (North Carolina State, 9,374 agent trajectories, 19 agents) split "what makes an agent succeed" into task factors and agent factors. The successful behavioural pattern — gather context before editing, invest in validation — turned out to be agent-determined, not task-adaptive. Good agents do this regardless of the task. Framework prompts can still influence tactics, but the effect narrows with each generation of base model.
+
+The practical consequence: pipeline structure pays back less as the underlying model gets stronger. Our tech-lead skill's alpha over a raw Opus 4.7 prompt will be smaller than its alpha over a raw Sonnet 4.6 prompt, and smaller still against whatever ships in six months. That doesn't invalidate the pipeline — it shifts what to measure. Track the gap between pipeline and raw-prompt outcomes over time. When the delta narrows from +30 points to +10, the pipeline hasn't broken; the model has internalised the behaviour. What's left is where structure still buys something: boundaries the model won't invent for you, reviewers with fresh context, artefacts that persist across sessions.
+
 ## Settled questions
 
 **Pre-flight is a permanent fixture.** In [Experiment 3](./experiments.md#experiment-3-pipeline-end-to-end), review agents failed on first attempt every time. Zero first-attempt pass rate. Both failures were deterministically checkable: missing imports, type errors. Adding `tsc --noEmit` before the review agent ran eliminated both. Pre-flight is now part of every pipeline run. The remaining scope question: in [Experiment 5](./experiments.md#experiment-5-edit-tool-bottleneck), `tsc` passed on code with a runtime logic error. A `||` operator split across lines by the edit tool, invisible to the compiler. Deterministic pattern checks for common edit-tool artifacts are candidates for additional pre-flight steps; false-positive rate is unmeasured.
+
+**Parallel decomposition of shared-state code is not worth it.** Quantified above: 16-point coordination floor, additive with information asymmetry. AST conflict detection doesn't move it. Spec completeness does. Parallel workers on independent modules remain viable; parallel workers on the same class or shared state are not.
 
 ## Open questions
 

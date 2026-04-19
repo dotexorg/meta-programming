@@ -4,13 +4,15 @@ You don't need to read the full site to get results. These 15 rules cover 80% of
 
 The rules are backed by A/B tests, production incidents, and a year of daily agent use. The theory lives in the other pages. This page is the cheat sheet.
 
-Examples use Claude Code, but most rules apply to any coding agent — Cursor, Codex, Windsurf, Copilot. The underlying constraint is the same: an LLM with a context window, a set of tools, and your instructions. Where a rule is Claude Code-specific (like `/clear`), the equivalent in your tool does the same thing.
+Examples use Claude Code, but most rules apply to any coding agent: Cursor, Codex, Windsurf, Copilot. The underlying constraint is the same: an LLM with a context window, a set of tools, and your instructions. Where a rule is Claude Code-specific (like `/clear`), the equivalent in your tool does the same thing.
 
 ## Setup
 
 ### 1. Keep CLAUDE.md under 200 lines
 
-The model can follow roughly 200 rules at a time. The system prompt already consumes about 50, which leaves you around 150. A 500-line CLAUDE.md doesn't make the agent smarter — it makes it selectively deaf. Research across multiple agents and LLMs confirms that context files over 500 lines actively reduce success rates.
+The model can follow roughly 200 rules at a time. The system prompt already consumes about 50, which leaves you around 150. A 500-line CLAUDE.md doesn't make the agent smarter. It makes it selectively deaf. Research across multiple agents and LLMs confirms that context files over 500 lines actively reduce success rates: it's a cliff drop, not gradual.
+
+And even under the budget, adherence isn't 100%. Context file instructions are followed roughly **70% of the time**. For rules that must hold in every session ("never push to main", "always run tests before commit"), don't rely on the file. Use hooks (see Rule 15). The file is advisory; hooks are deterministic.
 
 What belongs in there: build commands, test commands, naming conventions, architectural constraints, forbidden patterns. What doesn't: aspirational guidelines, style philosophy, anything you'd put in a README for humans. `use typescript strict mode` is a rule. `write clean, maintainable code` is noise.
 
@@ -36,19 +38,19 @@ src/shared/            — cross-cutting utilities only
 
 ### 2. Cheap model by default, expensive model for judgment
 
-Most tasks don't need the strongest model. Bug fixes, feature implementation, tests, refactors, code review — a mid-tier model handles all of these. As of mid-2026, that's Sonnet for Claude users or GPT-4.1 for OpenAI users. Switch to the top-tier model (Opus, o3) for complex multi-file refactors, architecture decisions, or subtle logic debugging where the agent needs to hold competing constraints in mind.
+Most tasks don't need the strongest model. Bug fixes, feature implementation, tests, refactors, code review: a mid-tier model handles all of these. As of mid-2026, that's Sonnet for Claude users or GPT-4.1 for OpenAI users. Switch to the top-tier model (Opus, o3) for complex multi-file refactors, architecture decisions, or subtle logic debugging where the agent needs to hold competing constraints in mind.
 
-The thinking level often matters more than the model. In controlled testing, the same model with high thinking outperformed itself with medium thinking on judgment tasks — and was actually cheaper (fewer tool calls, better reasoning per call). If you're going to spend tokens, spend them on thinking depth, not model size.
+The thinking level often matters more than the model. In controlled testing, the same model with high thinking outperformed itself with medium thinking on judgment tasks, and was actually cheaper (fewer tool calls, better reasoning per call). If you're going to spend tokens, spend them on thinking depth, not model size.
 
 ### 3. Manage your context like a budget
 
-The context window is an attention budget, not storage. Effective reasoning degrades well before the nominal limit — complex tasks can start failing at 30–40% utilization, not 90%.
+The context window is an attention budget, not storage. Effective reasoning degrades well before the nominal limit. Complex tasks can start failing at 30–40% utilization, not 90%.
 
-**The discipline:** one task → verify → commit → `/clear` or new session → next task. Errors that slip through on task 3 don't poison tasks 4 through 7, because that context no longer exists. A 106-turn task in our pipeline testing didn't contaminate subsequent tasks — because we reset between them. If a task requires touching 30+ files, it's not one task. Decompose before starting.
+**The discipline:** one task → verify → commit → `/clear` or new session → next task. Errors that slip through on task 3 don't poison tasks 4 through 7, because that context no longer exists. A 106-turn task in our pipeline testing didn't contaminate subsequent tasks, because we reset between them. If a task requires touching 30+ files, it's not one task. Decompose before starting.
 
-**The cache:** don't throw away cached context for no reason. Most providers have cache tiers — Claude has a 5-minute and a 1-hour window (check your provider's docs for specifics). The longer cache means you can work comfortably in one session without losing the cost benefit of cached prompts. The short cache is ideal for fast tasks and pipeline workflows where agents spawn in quick succession.
+**The cache:** don't throw away cached context for no reason. Most providers have cache tiers. Claude has a 5-minute and a 1-hour window (check your provider's docs for specifics). The longer cache means you can work comfortably in one session without losing the cost benefit of cached prompts. The short cache is ideal for fast tasks and pipeline workflows where agents spawn in quick succession.
 
-**When context gets heavy:** at 50–60% fill, tell the agent to summarize current state, decisions made, and remaining TODOs to a HANDOFF.md file. Then `/clear` and start fresh with "Read HANDOFF.md and continue." You control what survives instead of letting auto-compact decide — and auto-compact has primacy and recency bias, keeping the beginning and end while dropping the middle.
+**When context gets heavy:** at 50–60% fill, tell the agent to summarize current state, decisions made, and remaining TODOs to a HANDOFF.md file. Then `/clear` and start fresh with "Read HANDOFF.md and continue." You control what survives instead of letting auto-compact decide. Auto-compact has primacy and recency bias, keeping the beginning and end while dropping the middle.
 
 If you're doing a feature with multiple parts, write a PLAN.md first, then execute one phase per session.
 
@@ -64,13 +66,17 @@ The single highest-leverage habit. Three lines that eliminate most failures befo
 
 In a direct test, two consecutive failures without a spec — both deterministic, meaning they'd have happened every time. Adding `DO NOT modify classifyTicket` prevented both. Three words.
 
+Controlled academic work puts numbers on it. A 2026 paper tested 4 spec detail levels across 51 class-generation tasks. Full spec got 89% pass rate. Bare function signatures only: 56%. For multi-agent decomposition the drop was steeper (58% → 25%). The recovery is counterintuitive: fancy conflict-detection tooling adds nothing. Just restoring the full spec at merge time recovers the 89% ceiling. **Specification is both the cause of failure and the sufficient instrument of recovery** — so invest in spec completeness upfront, not reconciliation infrastructure later.
+
 See [Specification](./specification.md) for the full framework.
 
 ### 5. Plan first, restate, then code
 
-"Obvious on big features, overkill on small ones" — except skipping the plan on small features is exactly where bugs hide, because nobody reviews what seemed trivial.
+"Obvious on big features, overkill on small ones." Except skipping the plan on small features is exactly where bugs hide, because nobody reviews what seemed trivial.
 
 Write the plan. Pressure-test it: "what breaks if we do this? what are we assuming?" Then before any implementation, ask the agent to restate what it understood the task to be. Often the model misinterprets something, or you left out a detail that forced it to assume. This one step exposes blindspots before a single line of code is written.
+
+This isn't fussy process. Intent misalignment is the single largest category of production LLM failures: roughly **32% of all dissatisfactory responses**, ahead of hallucination and refusal combined. Multi-turn conversations make it worse: around 30% performance drop vs single-turn. The classic pattern is the XY problem at scale: user asks for Y ("echo the last 3 characters of a filename"), the model does exactly that, nobody asks whether the actual need was the file extension. Production LLMs are RLHF'd to be helpful (answer questions) and productive (don't clarify). The training signal points directly at the intent gap. Restate-back is the cheapest counter-measure.
 
 If the agent proposes something you don't understand during planning (barrel re-exports, unnecessary abstractions), question it. In our testing, an anti-pattern was caught and removed at spec review that would have shipped to production without it.
 
@@ -78,7 +84,7 @@ If the agent proposes something you don't understand during planning (barrel re-
 
 `run: npm test -- --coverage && assert coverage > 80%` changes behavior. `We value thorough testing and aim for high coverage` changes nothing. Across controlled runs, prose instructions produced zero measurable effect on agent behavior. Executable commands did.
 
-Every behavioral requirement should be a verifiable command or binary condition. If you can't check whether the agent followed it, it's not a rule — it's a wish.
+Every behavioral requirement should be a verifiable command or binary condition. If you can't check whether the agent followed it, it's not a rule. It's a wish.
 
 ## During implementation
 
@@ -86,7 +92,7 @@ Every behavioral requirement should be a verifiable command or binary condition.
 
 The fix→break→fix→revert cycle happens when contradictory constraints pile up in context. The model tries to satisfy your current error AND every failed fix attempt AND the original bug simultaneously. It can't, so it alternates between partial fixes that each break the other.
 
-Don't add more context hoping it helps — more context means more room to spiral.
+Don't add more context hoping it helps. More context means more room to spiral.
 
 **Do this:**
 1. Stop. Don't send another message.
@@ -97,13 +103,15 @@ If the same loop happens twice on a clean start, the problem is your spec, not t
 
 ### 8. Use extended thinking when quality drops
 
-If the agent's output suddenly feels shallow — missing edge cases, ignoring rules, producing generic code — the first thing to try is raising the thinking level. Adding `THINK` or `ULTRATHINK` to your prompt makes a measurable difference, often described by practitioners as "night and day."
+If the agent's output suddenly feels shallow (missing edge cases, ignoring rules, producing generic code), the first thing to try is raising the thinking level. Adding `THINK` or `ULTRATHINK` to your prompt makes a measurable difference, often described by practitioners as "night and day."
 
 The thinking budget is what the model spends on reasoning before it starts writing. Low thinking = the agent jumps to the most likely answer. High thinking = it works through the problem and catches more edge cases. In controlled testing, thinking level was a stronger predictor of rule-following than model choice. A cheaper model that thinks deeply outperformed an expensive model that thinks briefly.
 
-But more thinking isn't always better. At very high levels, the model can over-generate: verbose output, unnecessary abstractions, over-engineered solutions to simple problems. It also shifts from compliance toward conviction — the model may push back on your rules if it "thinks" they're wrong. The sweet spot depends on task complexity: high thinking for architecture and debugging, medium for routine implementation.
+But more thinking isn't always better. At very high levels, the model can over-generate: verbose output, unnecessary abstractions, over-engineered solutions to simple problems. It also shifts from compliance toward conviction: the model may push back on your rules if it "thinks" they're wrong. The sweet spot depends on task complexity: high thinking for architecture and debugging, medium for routine implementation.
 
 When you notice quality fluctuating across sessions (same prompt, noticeably worse output), it may be provider-side: GPU load, checkpoint rotation, or A/B testing can all reduce the thinking budget silently. Extended thinking keywords override that floor and restore the baseline.
+
+Failure modes on hard reasoning tasks cluster into four states: `ON_TRACK` (making progress), `LOOPING` (revisiting arguments without advancement), `DRIFTING` (topical relevance declining), and `STUCK` (shortened responses, visible uncertainty). Academic work (Cognitive Companion, IBM, April 2026) puts the degradation rate at roughly 30% of hard tasks for smaller models. If the agent looks like it's in any of the latter three states, don't try to argue it out. Reset the session. That's what Rule 7 already says, but now there's a name for what you're observing.
 
 ### 9. Verify before you move on
 
@@ -115,11 +123,11 @@ Only after the checks pass and the diff looks right: commit, reset context, move
 
 ### 10. Review in a separate session
 
-Agents praise their own work — not sometimes, but structurally. The same session that built the code shares the reasoning that created it, which means it can't see what that reasoning missed.
+Agents praise their own work, not sometimes but structurally. The same session that built the code shares the reasoning that created it, which means it can't see what that reasoning missed.
 
 **The cheap version:** `/clear`, then "Review all changes on this branch against PLAN.md. Identify gaps, deviations, and anything that doesn't match the spec." This is surprisingly effective because the model is genuinely better at reviewing than generating. It spots its own mistakes when forced to re-read the actual files instead of going from memory.
 
-**The better version:** A different model reviews. Claude writes, GPT reviews (or vice versa). In 133-cycle cross-model testing, each model had consistent but different blind spots. One race condition only appeared through the multi-model pass — invisible to either model reviewing its own work.
+**The better version:** A different model reviews. Claude writes, GPT reviews (or vice versa). In 133-cycle cross-model testing, each model had consistent but different blind spots. One race condition only appeared through the multi-model pass; invisible to either model reviewing its own work.
 
 See [Verification](./verification.md) for production setups.
 
@@ -131,7 +139,7 @@ When the agent says "I've verified there are no violations," it hasn't actually 
 
 ### 12. Performance is invisible to agents
 
-AI-generated code optimizes for correctness, not performance. In a 76K-line codebase, 118 functions were running up to 446× slower than necessary — all correct, all tests passing, none caught in code review. The patterns were consistent: naive algorithms where efficient ones exist, redundant computation, zero caching, wrong data structures.
+AI-generated code optimizes for correctness, not performance. In a 76K-line codebase, 118 functions were running up to 446× slower than necessary. All correct, all tests passing, none caught in code review. The patterns were consistent: naive algorithms where efficient ones exist, redundant computation, zero caching, wrong data structures.
 
 This isn't closing with better models. Benchmarks show the best LLM achieves less than 0.23× the speedup of human experts on optimization tasks. It's a fundamental mismatch between single-pass generation and iterative optimization.
 
@@ -141,7 +149,7 @@ This isn't closing with better models. Benchmarks show the best LLM achieves les
 
 ### 13. Documentation beats code maps for implementation
 
-When the codebase grows, the intuition is to give the agent more context — code maps, dependency graphs, RAG over the repo. This helps for orientation (finding the right file, understanding project structure), but it can hurt for implementation. In our A/B testing, the code-map run cost 51% more and produced a wrong architecture because the agent followed the map's structure instead of exploring the actual problem space.
+When the codebase grows, the intuition is to give the agent more context: code maps, dependency graphs, RAG over the repo. This helps for orientation (finding the right file, understanding project structure), but it can hurt for implementation. In our A/B testing, the code-map run cost 51% more and produced a wrong architecture because the agent followed the map's structure instead of exploring the actual problem space.
 
 Documentation works better for implementation because it's compressed knowledge. An architecture doc conveys the same information as 50 source files in a fraction of the tokens. The agent doesn't need to "discover" your architecture if it's written down.
 
@@ -149,7 +157,7 @@ Documentation works better for implementation because it's compressed knowledge.
 
 ### 14. Scope sessions to one module
 
-Reliable agent work tops out at roughly 1,500–3,000 lines of active, in-scope code per session. Not a product limitation — a consequence of how transformer attention works over long contexts. Cross-file dependency chains beyond that length become unreliable.
+Reliable agent work tops out at roughly 1,500–3,000 lines of active, in-scope code per session. Not a product limitation, but a consequence of how transformer attention works over long contexts. Cross-file dependency chains beyond that length become unreliable.
 
 Scope each session to one module, one feature, one domain. If the agent needs to understand how auth works to build a payment flow, point it at the auth documentation, not the auth source code. The doc has the contract; the source code has the implementation details that distract.
 
@@ -159,9 +167,11 @@ When the agent keeps making the same mistake, don't write a better prompt. Add a
 
 If your tool supports hooks (Claude Code has `PreToolUse`, `PreCompact`, `Stop`), use them as automated quality gates. A hook that runs `tsc --noEmit` before every edit catches type errors before they enter the codebase. A `PreCompact` hook that dumps session state to a file preserves critical context. These are one-time setup costs that pay off every session.
 
-One CI gate catches more bugs than a thousand lines of prompt instructions. If you find yourself adding the same rule to CLAUDE.md for the third time and the agent still ignores it — the rule doesn't belong in CLAUDE.md. It belongs in your tooling.
+One CI gate catches more bugs than a thousand lines of prompt instructions. If you find yourself adding the same rule to CLAUDE.md for the third time and the agent still ignores it, the rule doesn't belong in CLAUDE.md. It belongs in your tooling.
 
 This is the principle GitLab's AI playbook calls "constraints as multipliers." And it's the path from using agents to engineering with them.
+
+There's also a measurement version of this principle. One open-source tool (`claude-performance`) ships the full loop: reads your session logs, computes six effectiveness metrics (one-shot edit rate, agent spawn distribution, model mix, hook fire rates, activity distribution, project allocation). When a metric falls below target, it writes a behavioral rule into CLAUDE.md. The next week it re-measures. If the metric moved, the rule stays. If it held at target for weeks without the rule firing, the rule retires. "A static rule is a wish. A measured rule is a system." The rule lifecycle (add, measure, retire) is what separates a growing codebase of instructions from a codebase of instructions that actually works.
 
 ---
 

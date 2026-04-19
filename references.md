@@ -27,6 +27,7 @@ This page collects sources, evidence levels, and experiment details for the [Met
 | 7 | Edit tool investigation | Persistent error pattern traced to our own extension, not the platform. Post-fix benchmark: 7.1% errors, 1.1% data loss. | [index](index.md) |
 | 8 | Model evaluation (thinking levels) | Thinking level acts as compliance-to-conviction dial. Soft sycophancy identified: agent says no while providing implementation. | [index](index.md) |
 | 9 | Opus degradation incident (April 2026) | Read:Edit ratio dropped from 6.6 to 2.0, thinking depth fell 67%, costs spiked 80×. Three-day silent degradation with no API-side signal. | [verification](verification.md), [principles](principles.md) |
+| 10 | Opus 4.7 release analysis (April 16, 2026) | Tokenizer inflation 1.25–1.35× tokens per request, `budget_tokens` silently rerouted to `task_budget`, `xhigh` as new default, self-verification +~15% output tokens. Modelled workload $118K → $157.5K (+33.5%) at unchanged nominal pricing. | [landscape](landscape.md), [verification](verification.md) |
 
 ---
 
@@ -87,6 +88,33 @@ This page collects sources, evidence levels, and experiment details for the [Met
 17. **AMBIG-SWE (ICLR 2026).** Benchmark for ambiguity detection in software engineering tasks. 🟡
     - Referenced in: [specification](specification.md)
 
+17b. **Specification Gap (Chacón Sartori, ICN2 Barcelona, arxiv 2603.24284, March 2026).** 51 class-generation tasks across four spec detail levels, single and multi-agent. Single-agent: 89% → 56% as spec details are removed. Multi-agent: 58% → 25%. 16pp coordination cost plus 11pp information asymmetry, additive. AST conflict detector at 97% precision: Δ = 0pp. Restoring full spec recovers 89% ceiling. 🟡
+    - Referenced in: [specification](specification.md), [pipeline](pipeline.md), [landscape](landscape.md)
+
+17c. **Context Engineering (Calboreanu, Swift North AI Lab, arxiv 2604.04258, April 2026).** Five-role context package: Authority, Exemplar, Constraint, Rubric, Metadata. 200 documented interactions across four tools. Incomplete context triggered 72% of iteration cycles. Structured package: iterations 3.8 → 2.0, first-pass acceptance 32% → 55%. 🟡
+    - Referenced in: [specification](specification.md), [context-engineering](context-engineering.md), [landscape](landscape.md)
+
+17d. **SLUMP — Specification Loss Under eMergent sPecification (Purdue, arxiv 2603.17104, March 2026).** Specifications that emerge during a session drift from the original problem statement as conversation extends. ProjectGuard external state tracker recovers 90% of the faithfulness gap, cuts severe failures from 72 to 49 on benchmark. 🟡
+    - Referenced in: [specification](specification.md), [landscape](landscape.md), [self-improvement](self-improvement.md)
+
+17e. **Intent Gap (tianpan.co, April 10, 2026).** Intent misalignment accounts for ~32% of dissatisfactory LLM responses in production — largest single category. Four-layer user input model: immediate text, final goal, background desiderata, autonomy. Salesforce production: 58% single-turn success, 35% multi-turn. 67% resolution rate even after user correction. 🟡🟠
+    - Referenced in: [specification](specification.md), [landscape](landscape.md)
+
+17f. **Behavioral Drivers (Mehtiyev & Assunção, NCSU, arxiv 2604.02547, April 2026).** 9,374 agent trajectories across 19 agents. Trajectory structure discriminates success: "gather context before editing, invest in validation" is agent-determined, not task-adaptive. Framework effect shrinks with each generation of base model. 🟡
+    - Referenced in: [pipeline](pipeline.md), [principles](principles.md), [landscape](landscape.md)
+
+17g. **Cognitive Companion (Khan & Khan, IBM Dublin, arxiv 2604.13759, April 2026).** Four cognitive states: ON_TRACK, LOOPING, DRIFTING, STUCK. Two detector architectures: LLM-based companion (periodic structured prompt, −52–62% repetition, 11% overhead, API-accessible) and probe-based (linear classifier on hidden states layer 28, AUROC 0.84, requires open weights). 🟡
+    - Referenced in: [verification](verification.md), [self-improvement](self-improvement.md)
+
+17h. **AGENTS.md paper (arxiv 2602.11988).** Context files actively reduce SWE-bench success rates past 500 lines. Cliff drop, not gradual. Sweet spot: 200–300 actionable lines. "Not giving the model a mental model, giving it a compliance checklist." 🟡
+    - Referenced in: [specification](specification.md), [context-engineering](context-engineering.md), [landscape](landscape.md)
+
+17i. **Expectation-Realisation Gap (Lobentanzer et al., arxiv 2602.20292, February 2026).** Extension of METR study. 16 developers expected +24% productivity from AI tools, measured −19%. 43-point calibration error. 🟡
+    - Referenced in: [verification](verification.md)
+
+17j. **WebXSkill (Microsoft + UNC, arxiv 2604.13318, April 2026).** Skill defined as parameterized action + natural-language guidance. +9.8 / +12.9 points on WebArena / WebVoyager against baseline. Concrete instance of Layer 2 intent form selection. 🟡
+    - Referenced in: [index](index.md), [self-improvement](self-improvement.md)
+
 18. **ACE Framework.** Agentic Context Engineering. Memory scoring: each unit carries a score that updates on use. Quality saturates at ~7 governed memories per entity across 500 adversarial queries. 🟡
     - Referenced in: [self-improvement](self-improvement.md)
 
@@ -128,6 +156,21 @@ This page collects sources, evidence levels, and experiment details for the [Met
 30. **Martin Fowler.** Spec progression: spec-first → spec-anchored → spec-as-source. Maturity curve mapping. 🟡
     - Referenced in: [index](index.md)
 
+30b. **Harrison Chase — "Continual learning for AI agents" (LangChain blog, April 2026).** Three-layer framework: Model (weights), Harness (code + always-present instructions), Context (CLAUDE.md, skills, mcp.json). Hot-path vs offline memory update modes. Traces as shared substrate across all three layers. OpenClaw explicitly mapped as "Pi plus scaffolding" = harness layer. 🟡
+    - Referenced in: [landscape](landscape.md), [self-improvement](self-improvement.md), [index](index.md)
+
+30c. **GitLab AI-Assisted Development Playbook.** Five autonomy levels: L1 Baseline (autocomplete), L2 Pair, L3 Conductor, L4 Orchestrator, L5 Harness. Five principles: failing test before every feature, fix the environment not the prompt, constraints are multipliers, repo is single source of truth, ask the agent to challenge you. Warning: skipping to L4/L5 without infrastructure amplifies technical debt. 🟡
+    - Referenced in: [landscape](landscape.md), [playbook](playbook.md), [principles](principles.md)
+
+30d. **TechDebt.guru — 7 Copilot Anti-Patterns.** Accept-and-Forget, Tab-Tab-Tab Syndrome (40% higher defect density), Context Blindness, Dependency Sprawl, Test Scaffolding Decay, Documentation Displacement, Style Drift. GitClear: 55% higher revert rate within two weeks for AI code. CodeRabbit (470 repos): 1.7× more bugs, 75% more logic errors, 8× more I/O performance bugs. 🟡🟠
+    - Referenced in: [landscape](landscape.md), [verification](verification.md)
+
+30e. **Cursor Official Best Practices (April 2026).** Plan Mode (Shift+Tab) for research → questions → plan → approve → build. "Start over from a plan" preferred to mid-agent fixing. New conversation when context polluted. Save plans to `.cursor/plans/` for team docs and resumption. 🟡
+    - Referenced in: [landscape](landscape.md), [pipeline](pipeline.md)
+
+30f. **Opus 4.7 Migration Analysis (Anthropic platform docs + @badlogicgames + ravoid.com + dev.to).** Tokenizer inflation 1.0–1.35×, `budget_tokens` silently rerouted, `xhigh` as new default, self-verification +~15% output. Modelled workload: $118K/mo → $157.5K/mo (+33.5%) on identical behavior. Prompt cache cold for 2–4 weeks post-migration. 🟡
+    - Referenced in: [landscape](landscape.md), [verification](verification.md)
+
 ### Community Reports
 
 31. **Amazon deployment (2026).** 21,000 agents, 80% weekly usage. 4 Sev-1 incidents in 90 days. 6-hour outage, ~6.3M lost orders. ~30,000 layoffs concurrent with AI scaling. 🟠
@@ -145,11 +188,21 @@ This page collects sources, evidence levels, and experiment details for the [Met
 35. **Rory Teehan.** Structured error logging: what happened, why, what should have happened. 🟡
     - Referenced in: [self-improvement](self-improvement.md)
 
+35b. **adelaidasofia/claude-performance (GitHub, April 2026).** Measurement-driven CLAUDE.md: reads session JSONLs, computes six effectiveness metrics (one-shot edit rate, agent spawn distribution, model mix, hook fire rates, activity distribution, project allocation), writes behavioral rules when a metric falls below target, re-measures weekly, retires rules when metric stabilises. Rule lifecycle: add → measure → retire. 🟠
+    - Referenced in: [self-improvement](self-improvement.md), [playbook](playbook.md), [landscape](landscape.md)
+
+35c. **Homunculus plugin (Reddit r/ClaudeAI, April 2026).** Observes user patterns, auto-writes skills/hooks/commands when repetitive behavior detected. Probabilistic skills (50–80% fire rate), deterministic commands. Per-project state in `.claude/homunculus/`. 🟠
+    - Referenced in: [self-improvement](self-improvement.md), [landscape](landscape.md)
+
+35d. **u/thurn2 (Reddit r/ClaudeCode).** "Agent teams = expensive subagents with better marketing." Community consensus across multiple threads: communication overhead overwhelms team leader's context, idle notifications consume context, no proven benefit over simple subagent spawning for current implementations. 🟠
+    - Referenced in: [pipeline](pipeline.md)
+
 ### People to Follow
 
 36. **Andrej Karpathy** (@karpathy). Autoresearch: 700 commits in two days, −11% validation loss. Memory should be tree-structured, not flat. 🟠
 37. **Mario Zechner** (@badlogicgames). Built Pi. When agents self-praise, human review becomes the bottleneck. 🟠
-38. **Harrison Chase** (@hwchase17). LangChain. What does production agent orchestration actually look like at scale. 🟠
+38. **Harrison Chase** (@hwchase17). LangChain. Model/Harness/Context three-layer continual learning framework. What does production agent orchestration actually look like at scale. 🟡
+39. **Armin Ronacher** (@mitsuhiko). Advocate for `lat.md` (knowledge graph in markdown). Shipped multi-edit tooling for Pi. Direct critic of agent anti-patterns. 🟠
 
 ---
 
