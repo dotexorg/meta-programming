@@ -1,4 +1,4 @@
-# What Changed — April 17, 2026
+# What Changed: April 17, 2026
 
 For readers who already went through the site. One entry per page, only what's new. Skip the rest.
 
@@ -40,7 +40,7 @@ The big shifts this round: Layer 2 got rewritten, Opus 4.7 shipped with a silent
 
 ### [pipeline.md](./pipeline.md)
 
-- **New section: "Parallel decomposition has a measured tax."** 16pp coordination + 11pp info asymmetry floor on parallel workers sharing state. Scope of finding spelled out — does not apply to sequential pipelines or role-specialised agents. u/thurn2 quote: "agent teams = expensive subagents with better marketing."
+- **New section: "Parallel decomposition has a measured tax."** 16pp coordination + 11pp info asymmetry floor on parallel workers sharing state. Scope of finding spelled out: does not apply to sequential pipelines or role-specialised agents. u/thurn2 quote: "agent teams = expensive subagents with better marketing."
 - **New section: "The pipeline's advantage shrinks as models improve."** Behavioral Drivers (NCSU, 9,374 trajectories): successful behaviour is agent-determined, framework effect narrows with each model generation. What to measure going forward.
 - Parallel decomposition added to Settled Questions.
 
@@ -51,14 +51,14 @@ The big shifts this round: Layer 2 got rewritten, Opus 4.7 shipped with a silent
 
 ### [self-improvement.md](./self-improvement.md)
 
-- **New section: "Chase's three learning layers."** Model / Harness / Context from LangChain's continual learning framework. Orthogonal to LMP — LMP is about what form, Chase is about where in the stack. OpenClaw explicitly mapped as harness layer. Hot-path vs offline memory updates.
-- New practitioner: `adelaidasofia/claude-performance` — measurement-driven CLAUDE.md with rule retirement (add → measure → retire). "A static rule is a wish. A measured rule is a system."
-- New practitioner: Homunculus plugin — pattern observation daemon auto-writes skills/hooks/commands.
+- **New section: "Chase's three learning layers."** Model / Harness / Context from LangChain's continual learning framework. Orthogonal to LMP: LMP is about what form, Chase is about where in the stack. OpenClaw explicitly mapped as harness layer. Hot-path vs offline memory updates.
+- New practitioner: `adelaidasofia/claude-performance`, measurement-driven CLAUDE.md with rule retirement (add → measure → retire). "A static rule is a wish. A measured rule is a system."
+- New practitioner: Homunculus plugin, pattern observation daemon auto-writes skills/hooks/commands.
 - WebXSkill paper added: skill = parameterized action + NL guidance. +9.8 / +12.9 pts on WebArena / WebVoyager.
 
 ### [context-engineering.md](./context-engineering.md)
 
-- **New section: "The AGENTS.md cliff."** Paper (arxiv 2602.11988) quantifies context file cliff: success drops past 500 lines. Sweet spot 200–300 actionable lines. ~70% adherence even under budget — hooks for rules that must hold every time, context files are advisory.
+- **New section: "The AGENTS.md cliff."** Paper (arxiv 2602.11988) quantifies context file cliff: success drops past 500 lines. Sweet spot 200–300 actionable lines. ~70% adherence even under budget. Hooks for rules that must hold every time, context files are advisory.
 - KB size updated: 429 → 1,000+ bullets, synthesis 8KB → 12KB.
 
 ### [principles.md](./principles.md)
@@ -70,9 +70,9 @@ The big shifts this round: Layer 2 got rewritten, Opus 4.7 shipped with a silent
 ### [landscape.md](./landscape.md)
 
 - **New top section: "Opus 4.7 and the silent repricing."** Tokenizer tax, `budget_tokens` deprecation, `xhigh` default, +33.5% real cost.
-- **New section: "April 2026: the spec-driven research wave."** Spec Gap, Context Engineering, SLUMP, AGENTS.md paper, Intent Gap — consolidated.
+- **New section: "April 2026: the spec-driven research wave."** Spec Gap, Context Engineering, SLUMP, AGENTS.md paper, Intent Gap, all consolidated.
 - **New section: "Harrison Chase's three-layer framing."** Traces as shared substrate.
-- **New section: "GitLab's five autonomy levels."** L1–L5 ladder. Warning about skipping to L4/L5 without verification infrastructure — maps to Amazon's Sev-1 pattern.
+- **New section: "GitLab's five autonomy levels."** L1–L5 ladder. Warning about skipping to L4/L5 without verification infrastructure; maps to Amazon's Sev-1 pattern.
 - **New section: "Seven anti-patterns from production telemetry."** TechDebt.guru / GitClear / CodeRabbit numbers.
 - Armin Ronacher added to "People worth following."
 - Rule-retirement loop added to self-improvement trend.
@@ -98,8 +98,8 @@ The big shifts this round: Layer 2 got rewritten, Opus 4.7 shipped with a silent
 
 ## What was settled (moved out of Open Questions)
 
-- **Parallel decomposition of shared-state code** — quantified and settled: don't do it. Sequential workers sharing a spec artefact is the working pattern. ([pipeline](./pipeline.md#settled-questions))
-- **Layer 2 direction** — settled on form selection, not language invention. Open question moved to "which form for which task" measurement. ([principles](./principles.md#open-questions))
+- **Parallel decomposition of shared-state code**: quantified and settled, don't do it. Sequential workers sharing a spec artefact is the working pattern. ([pipeline](./pipeline.md#settled-questions))
+- **Layer 2 direction**: settled on form selection, not language invention. Open question moved to "which form for which task" measurement. ([principles](./principles.md#open-questions))
 
 ## What's newly open
 
@@ -109,4 +109,4 @@ The big shifts this round: Layer 2 got rewritten, Opus 4.7 shipped with a silent
 
 ---
 
-*Previous changelogs: none — this is the first one. Future rounds: one file per sync date, appended below.*
+*Previous changelogs: none. This is the first one. Future rounds: one file per sync date, appended below.*
