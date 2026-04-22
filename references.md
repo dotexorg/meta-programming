@@ -38,7 +38,7 @@ This page collects sources, evidence levels, and experiment details for the [Met
 1. **LinearB (2026).** "The Real Impact of AI on Developer Productivity." 8.1M pull requests, 4,800 teams, 42 countries. AI-generated code: 1.7× more review revisions, 4.6× longer review wait, 32.7% acceptance rate (vs 84.4% human). Developers feel 20% faster; tasks take 19% longer end-to-end. 🟡
    - Referenced in: [index](index.md), [verification](verification.md), [principles](principles.md)
 
-2. **Stanford Meta-Harness Study (2026).** Changing the harness around a fixed LLM produces a 6× performance gap on the same benchmark. Automated harness optimization searched configurations the way gradient descent searches weight space. 🟡
+2. **Meta-Harness (Lee, Nair, Zhang, Lee, Khattab, Finn — Stanford + MIT, arxiv 2603.28052, March 2026).** End-to-end optimization of model harnesses. 6× performance gap on the same benchmark from harness changes alone. Meta-Harness agentic proposer searches harness code via filesystem: +7.7 points on online text classification with 4× fewer context tokens, +4.7 points on retrieval-augmented math (200 IMO-level), 76.4% on TerminalBench-2 (top auto-optimized system). 🟡
    - Referenced in: [index](index.md), [principles](principles.md)
 
 3. **ETH Zurich (Feb 2026).** 138 real-world tasks across 3 models. Auto-generated context files reduced task success by 3%. Human-written boundaries improved success by 4%. 🟡
@@ -64,7 +64,7 @@ This page collects sources, evidence levels, and experiment details for the [Met
 9. **Microsoft Research RiSE (March 2026).** Lahiri et al. "Intent Formalization" named as a grand challenge for 2026. Intent gap: the semantic distance between what a developer means and what the system does. 🟡
    - Referenced in: [index](index.md), [specification](specification.md)
 
-10. **Allard et al. ERL (March 2026).** Agents with heuristics extracted from prior trajectories outperformed ReAct baselines by +7.8%. "Heuristics provide more transferable abstractions than few-shot prompting." 🟡
+10. **ERL — Experiential Reflective Learning (Allard, Teinturier, Xing, Viaud, arxiv 2603.24639, March 2026).** Agents with heuristics extracted from prior trajectories outperformed ReAct baselines by +7.8% on the Gaia2 benchmark. Two-component framework: heuristic generation from task experience + retrieval-augmented execution for new tasks. "Heuristics provide more transferable abstractions than few-shot prompting." 🟡
     - Referenced in: [index](index.md)
 
 11. **ExpeL (Andrew Zhao et al., 2023).** Experience Learning: three-stage self-improvement (act → reflect → extract). On HotpotQA and ALFWorld, ExpeL agents improve with each batch of trajectories. 🟡
@@ -173,7 +173,7 @@ This page collects sources, evidence levels, and experiment details for the [Met
 
 ### Community Reports
 
-31. **Amazon deployment (2026).** 21,000 agents, 80% weekly usage. 4 Sev-1 incidents in 90 days. 6-hour outage, ~6.3M lost orders. ~30,000 layoffs concurrent with AI scaling. 🟠
+31. **Amazon Kiro deployment (March 2026).** 21,000 agents, 80% weekly usage mandate. 4 Sev-1 incidents in 90 days. March 5 outage: 6 hours, ~6.3M lost orders (99% US order drop). Internal Treadwell email cites "Gen-AI assisted changes" with "high blast radius." 90-day safety reset across 335 Tier-1 systems, mandatory two-person review. ~30,000 layoffs concurrent with AI scaling. Primary reporting: Financial Times (internal docs). Summary: [The Register, 10 Mar 2026](https://www.theregister.com/2026/03/10/amazon_ai_coding_outages/). 🟠
     - Referenced in: [index](index.md), [verification](verification.md), [principles](principles.md), [landscape](landscape.md)
 
 32. **Self-improvement tools (March 2026).** Three independent projects (skill-loop, selfwrite, iterate) shipped in the same week without coordination. All focused on instruction improvement, not weight modification. 🟠

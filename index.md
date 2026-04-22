@@ -30,7 +30,7 @@ How you structure an agent's memory, specs, and feedback loops matters more than
 
 The data landed before the theory. LinearB studied 8.1 million pull requests. The headline: AI-generated code ships faster but breaks more. More issues, longer review queues, lower acceptance rates. Developers _feel_ 20% faster; tasks actually take 19% longer end-to-end. Creation accelerated. Verification didn't.
 
-The natural response is to wait for a better model. Stanford's 2026 Meta-Harness study suggests that's the wrong fix. They took the same model, changed only the scaffolding around it, and measured a **6× performance gap** on the same benchmark. Particula ran a similar test on SWE-bench: same model, stock scaffold scored 42%, rebuilt scaffold scored 78%. The model didn't change. The process around it did, and that was the difference between failing and passing.
+The natural response is to wait for a better model. Stanford's 2026 Meta-Harness study suggests that's the wrong fix. They took the same model, changed only the scaffolding around it, and measured a **6× performance gap** on the same benchmark. The model didn't change. The process around it did, and that was the difference between failing and passing.
 
 This is the evolutionary pressure. It runs in three stages.
 
@@ -62,7 +62,7 @@ LMP has structure. Three layers, each dependent on the one below.
 
 Not documentation. Not memory. A working model of what the agent knows, how it knows it, where it fails, and what constraints it operates under. This is what separates a generic model from a system shaped by a specific engineer's context.
 
-The performance difference is real. The ERL paper showed that agents operating with heuristics extracted from prior trajectories outperformed ReAct baselines by **+7.8%** on standard benchmarks. Their finding: _"Heuristics provide more transferable abstractions than few-shot prompting."_ Persistent structured knowledge outperforms in-context examples. The format matters.
+The performance difference is real. The ERL paper showed that agents operating with heuristics extracted from prior trajectories outperformed ReAct baselines by **+7.8%** on the Gaia2 benchmark. Their finding: _"Heuristics provide more transferable abstractions than few-shot prompting."_ Persistent structured knowledge outperforms in-context examples. The format matters.
 
 We measured this directly. In a controlled A/B test, the same architectural problem ran through a generic Claude Sonnet instance and through an agent with a structured knowledge base. The generic agent asked for a code map. The KB agent flagged the exploration-versus-exploitation paradox, with evidence from prior sessions, before writing a line of code. The difference isn't code quality. It's the level of reasoning the agent brings before touching implementation. The broader practitioner community confirmed the pattern independently. Karpathy's framing of personal KB-building via LLMs named the same mechanism: the KB is the primary artifact, not the code it produces.
 
