@@ -70,8 +70,11 @@ This page collects sources, evidence levels, and experiment details for the [Met
 11. **ExpeL (Andrew Zhao et al., 2023).** Experience Learning: three-stage self-improvement (act → reflect → extract). On HotpotQA and ALFWorld, ExpeL agents improve with each batch of trajectories. 🟡
     - Referenced in: [self-improvement](self-improvement.md), [landscape](landscape.md)
 
-12. **Chroma MECW (2025).** Maximum Effective Context Window. 18 frontier models tested. Universal degradation; effective window as low as 1-2% of advertised maximum in some conditions. 🟡🔴 (specific numbers unverified by us)
+12. **Chroma 'Context Rot' (July 2025).** 18 frontier models tested (GPT-4.1, Claude 4, Gemini 2.5, Qwen3, others). Universal degradation with input length: 20-50% accuracy drop between 10K and 100K input tokens (NIAH low-similarity), >30% accuracy loss in mid-window positions across all 18 models. Coined "Context Rot" as continuous decline, not overflow. 🟡
     - Referenced in: [context-engineering](context-engineering.md), [principles](principles.md)
+
+12b. **Paulsen MECW (arxiv Oct 2025, pub Jan 2026).** "Context Is What You Need: The Maximum Effective Context Window for Real World Limits of LLMs." Separate paper from Chroma; coined the term MECW. Effective context is task-dependent: simple retrieval tolerates ~3000-5000 tokens, complex operations (sort, summarize) collapse at 400-1200 tokens, some top models fail at as few as ~100 tokens on specific tasks. Effective window can be reduced "as much as 99%" of advertised MCW on worst-case structured tasks. 🟡
+    - Referenced in: [context-engineering](context-engineering.md)
 
 13. **Reflexion (NeurIPS 2023).** Verbal reflection with episodic memory raised HumanEval from 80% to 91%. 🟡
     - Referenced in: [landscape](landscape.md)
