@@ -38,7 +38,7 @@ src/shared/            — cross-cutting utilities only
 
 ### 2. Cheap model by default, expensive model for judgment
 
-Most tasks don't need the strongest model. Bug fixes, feature implementation, tests, refactors, code review: a mid-tier model handles all of these. As of mid-2026, that's Sonnet for Claude users or GPT-4.1 for OpenAI users. Switch to the top-tier model (Opus, o3) for complex multi-file refactors, architecture decisions, or subtle logic debugging where the agent needs to hold competing constraints in mind.
+Most tasks don't need the strongest model. Routine edits, simple bug fixes, file summarization, commit messages, routing — a cheap model handles them and pays for itself in volume. As of mid-2026 that's Haiku 4.5 for Claude users or GPT-5.4 mini for OpenAI users. Step up to the workhorse tier (Sonnet 4.6, GPT-5.4) for feature work, code review, and most tests — this is where you spend most of your budget. Reserve the top tier (Opus 4.7, GPT-5.5) for complex multi-file refactors, architecture decisions, and subtle logic debugging where the agent needs to hold competing constraints in mind.
 
 The thinking level often matters more than the model. In controlled testing, the same model with high thinking outperformed itself with medium thinking on judgment tasks, and was actually cheaper (fewer tool calls, better reasoning per call). If you're going to spend tokens, spend them on thinking depth, not model size.
 
