@@ -90,6 +90,8 @@ Cheap promotion produces rule pollution. A weaker model extracting cross-session
 
 Extract liberally within sessions. Promote conservatively across sessions. Demote as aggressively as you promote.
 
+Form factor matters as much as cadence. Two May 2026 patterns from a Rust orchestrator (lopi) make the cheap-extraction shape concrete. The first is a single-imperative form: each lesson is one line starting with `must / do not / always / never`, capped at 200 characters, behavior-specific rather than principled. The reasoning, surfaced explicitly in the source: "bounded scope discourages model drift into general advice unrelated to actual failure." The second is a score gate. Below `LESSON_QUALITY_GATE = 0.6`, the lesson silently doesn't get written — a run that didn't reach informative-enough quality won't generalize, and persisting it degrades future retrieval. 🟡 Every published self-improvement loop ships an extraction step. Most don't ship either of these. Form-bounding cuts the model-drift failure mode at write time; quality-gating cuts the noise-accumulation failure mode at the same step. The two together are cheaper than either by itself.
+
 This is [Principle 6](./principles.md). The one principle that touches all the others, because without the feedback loop, none of the others compound.
 
 ## Chase's three learning layers

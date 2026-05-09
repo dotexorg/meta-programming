@@ -94,6 +94,14 @@ The edit tool failure rate is real and documented. Agents express edits as text 
 
 None of these are production-ready for general agent use. tree-sitter is the foundational library all three build on. The problem is meaningful. Until it's solved, every edit-heavy agent workflow accumulates silent error risk at the margins. [see Experiments](./experiments.md)
 
+A different angle reached production in May 2026. agent-lsp bridges Language Server Protocol into MCP and ships speculative execution as an agent-native primitive: apply a hypothetical edit in memory, get back the diagnostic delta, commit or discard without touching disk. The reproducible benchmark across five real codebases (15K to 319K lines, Go / Python / TypeScript) finds 92–99% of grep matches on symbol references are false positives at scale — HashiCorp Consul `Close` returns 1156 grep hits and twelve real references. Structured navigation runs 5–34× more token-efficient than grep-and-read, scaling with codebase size. The fix isn't always a better text-merge layer; it's removing the failure at the discovery step, before the edit happens. Bridge quality inherits whatever the underlying language server can see — reliable for typed languages, weaker for dynamic ones — and the daemon takes minutes of cold indexing on Python and TypeScript projects before the first useful query. 🟡
+
+## Recovery loops crystallize
+
+Ralph-loop reached its fourth independent shipped implementation in May 2026. 🟡 Four principles every implementation reproduces: fresh context per iteration, external memory in files plus Git, one item per loop, machine-verifiable completion criteria. Geoffrey Huntley named the pattern; LoopTroop (April) shipped "councils plan, Ralph loops recover, OpenCode worktrees ship"; `ralph-claude-code` ported the recovery layer alone with cost caps; lopi (Rust + tokio) is the architecturally most complete. lopi's loop reads Plan → Implement → Test → Score → Fix-in-place → Retry with git rollback per failed attempt, plus a post-mortem step on terminal failure that distills the failure into a single imperative constraint — must / do not / always / never, ≤200 chars — for future similar tasks.
+
+The quality gate is what compounds. lopi's `LESSON_QUALITY_GATE = 0.6` writes nothing if the run scored below the threshold, on the explicit reasoning that "below this value the run is not informative enough to generalise from; persisting it would degrade future retrieval quality." Most self-improvement loops ship extraction. Most don't ship a quality gate. The gate is what stops the lesson store from becoming noise.
+
 ## Pi ecosystem
 
 The extension list has grown past what's easy to track. The additions with real adoption:
@@ -132,7 +140,7 @@ On benchmarks: SWE-bench Verified 2026 has Verdent at 76.1%, Cursor/Codeium arou
 
 **When does observability become overhead?** OTel GenAI SIG is maturing. Schemas still evolving. At what complexity does full tracing pay off versus `console.log`? No data. We haven't run the comparison.
 
-**How far does AST edit generalize?** aiCoder: JavaScript. Ki Editor: editor-level. Relace: API-only. No solution covers the full agent edit workflow across languages. Clear problem. No clear solution.
+**How far does AST edit generalize?** aiCoder: JavaScript. Ki Editor: editor-level. Relace: API-only. No solution covers the full agent edit workflow across languages. **Mutated by agent-lsp (May 2026):** the question reframes once a fourth angle ships. The edit-reliability problem doesn't reduce to a single solution shape — AST-merge handles failed text replacements after the agent decided what to write; LSP-bridge handles the discovery step before the edit is written; speculative execution handles the verification step before the edit is committed. All three layers are needed; the open question is which combination dominates at which task profile, not which approach wins outright.
 
 **Does spec-kit's adoption mean fewer failures?** Amazon argues for SDD. But the evidence is directional. Spec-first teams fail differently, not necessarily less. A proper before/after on incident rates? Doesn't exist in public.
 

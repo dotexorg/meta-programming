@@ -78,6 +78,8 @@ The constraint language (`DO NOT`, `GLOSSARY`, explicit acceptance criteria) is 
 
 The academic framing arrived at the same answer from three directions. Microsoft Research RiSE named Intent Formalization a grand challenge, with a spectrum from lightweight tests to functional specs to DSL synthesis. Martin Fowler's progression (spec-first → spec-anchored → spec-as-source) maps the maturity curve. A formal Context Engineering paper in April 2026 named five roles a complete context package needs to carry (Authority, Exemplar, Constraint, Rubric, Metadata) and measured that a structured package raised first-pass acceptance from 32% to 55%. DO/DO NOT/GLOSSARY handles three of those five; the other two (working code samples and explicit success criteria) are where most specs silently underperform.
 
+May 2026 added a concrete reference at the smallest end of the form spectrum. lopi's post-mortem stage (Rust + tokio orchestrator, public source) writes each lesson as a single imperative constraint — one line starting with `must` / `do not` / `always` / `never`, ≤200 characters, behavior-specific rather than principled. The reasoning in the source code: bounded scope discourages drift into general advice unrelated to the actual failure. This is the first publicly documented production form at this size, and it sits at one extreme of the form-selection space (one-line imperative for cheap per-session capture) opposite the multi-section spec at the other (DO/DO NOT/GLOSSARY for cross-session contracts). The form-selection question stops being abstract once both ends have shipped reference implementations.
+
 [See Specification →](./specification.md)
 
 ### Layer 3: Closed Loop
@@ -89,6 +91,8 @@ Stanford's Meta-Harness study proved this at the harness level: automated optimi
 A separate end-to-end pipeline run validated the approach concretely. Twenty-four files, 253 tests, zero regressions, $5.50 in API cost. Structured process (Scout → Spec → Plan → Worker → Reviewer → Lessons) beat raw context injection on cost, quality, and first-attempt pass rate. The Lessons stage is what makes the next run cheaper: the reviewer extracts structured findings, and those findings feed forward.
 
 The compounding mechanism is what distinguishes Layer 3 from simple iteration. Each run narrows the gap between what you intend and what the agent produces. The knowledge base grows. The spec language tightens. Failure modes get documented before they recur. This is why LMP is a compounding return, not a one-time gain.
+
+The loop has a known failure mode: noise accumulation. Every weak lesson written degrades future retrieval, so an unfiltered extractor eventually pollutes the very KB it's supposed to improve. lopi's `LESSON_QUALITY_GATE = 0.6` is the first publicly shipped score-threshold prevention for this: a run scoring below the gate writes nothing, on the explicit reasoning that a sub-threshold run isn't informative enough to generalise from and persisting it would degrade future retrieval. Most self-improvement loops ship the extraction step. Most don't ship the gate. The gate is what stops the closed loop from compounding noise alongside signal — and it's the missing piece in the academic frameworks (ExpeL, Reflexion) which assume extraction is value-positive by default.
 
 [See Self-Improvement →](./self-improvement.md)
 
