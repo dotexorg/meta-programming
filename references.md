@@ -1,6 +1,6 @@
 # References
 
-This page collects sources, evidence levels, and experiment details for the [Meta-Programming](index.md) documentation.
+This page collects tools, sources, and experiment details behind the [Meta-Programming](index.md) documentation. Tools come first — runnable artifacts worth installing, forking, or reading — then sources backing the claims in narrative pages, then our own experiments.
 
 ## Evidence Levels
 
@@ -11,6 +11,58 @@ This page collects sources, evidence levels, and experiment details for the [Met
 | 🟠 | Community reports | Widely observed, not independently verified by us |
 | 🔴 | Unverified | Heard, not checked |
 | ⚪ | Opinion | Our synthesis, reasoned but not proven |
+
+---
+
+## Tools
+
+Tools are organised by pipeline layer (Spec → Edit → Navigate → Verify → Recover → Self-improve). The list is narrow rather than exhaustive: each entry is something we observed shipping, evaluated as a research signal, or use ourselves. License/access labels appear when they affect adoption decisions.
+
+### Spec / Form
+
+- **[AGENTS.md](https://agents.md)** — cross-tool agent context standard. 60,000+ repositories, Linux Foundation / Agentic AI Foundation governed, co-signed by Anthropic, Google, Microsoft, Cursor. The lowest-friction form for cross-session agent contracts. 🟡
+- **[spec-kit](https://github.com/github/spec-kit)** — GitHub's five-command SDD workflow: constitution → specify → plan → tasks → implement. 79K stars, supports 20+ agent runtimes. Maps to Fowler's spec-anchored maturity level. 🟡
+- **[Kiro](https://kiro.dev)** — Amazon IDE built around requirements → design → tasks. Specs live in project root and evolve with the codebase. Spec-first maturity, beta access. 🟡
+- **[Tessl](https://tessl.io)** — spec-as-source aspiration: only the specification is human-edited, code is a generated artifact. Earliest commercial example of Fowler's level-three maturity. 🟠
+- **[Pydantic AI](https://github.com/pydantic/pydantic-ai)** — distilled 4,668 PR comments into 150 AGENTS.md rules. Concrete example of compiling engineering taste into agent instructions. 🟡
+
+### Edit / Apply
+
+- **[Cursor](https://cursor.sh)** — apply-model architecture (planner emits intent, applier executes the diff). Plan Mode (Shift+Tab) for research → questions → plan → approve → build. Commercial, free tier. 🟡
+- **[Aider](https://aider.chat)** — architect mode separates planning from edit application. Pioneered the architect/editor split now reproduced across the apply-model layer. Open source. 🟠
+- **[Morph Fast Apply](https://morphllm.com)** — semantic diff format optimised for AI output. ~4300 tok/s, cuts apply-step token usage ~40% on Claude 3.5/3.7. 🟠
+- **[Relace Instant Apply](https://relace.ai)** — alternative apply model in the same pattern as Morph. Inspired by Cursor's apply model. 🟠
+- **[Augment Code](https://augmentcode.com)** — single-writer rule for hotspot files, sequential merge strategy at scale. Commercial. 🟡
+
+### Navigate / Discover
+
+- **[agent-lsp](https://github.com/blackwell-systems/agent-lsp)** — Go MCP server bridging Language Server Protocol into the agent tool surface. 56 tools, 30 CI-verified language servers. Reproducible benchmark across five codebases (15K–319K LOC) finds 92–99% of grep matches on symbol references are false positives; structured navigation runs 5–34× more token-efficient than grep-and-read. Ships speculative execution and phase enforcement primitives. 🟡
+
+### Verify / Gate
+
+- **[Promptfoo](https://github.com/promptfoo/promptfoo)** — trajectory assertions: `tool-used`, `tool-args-match`, `tool-sequence`, `step-count`, `goal-success`. 350K developers. Acquired by OpenAI March 2026 for $86M. 🟡
+- **[OpenTelemetry GenAI](https://opentelemetry.io/docs/specs/semconv/gen-ai/)** — semantic conventions for agent observability: `gen_ai.chat`, `agent.invoke`, `tool.execute`. Native support in Datadog, Honeycomb, New Relic. 🟡
+
+### Recovery loops
+
+- **[lopi](https://github.com/konjoai/lopi)** — Rust + tokio Ralph-loop orchestrator. Plan → Implement → Test → Score → Fix → Retry with `git reset --hard` per failed attempt. Hard turn limits, diff-scope check, last-error injection, model routing escalation only after failure. Quality gate `LESSON_QUALITY_GATE = 0.6` skips lesson write below threshold. Single-imperative lesson form (≤200 chars). Most architecturally complete of the four shipped Ralph-loop reproductions. 🟡
+- **[ralph-claude-code](https://github.com/gacabartosz/ralph-claude-code)** — Claude Code port of the recovery layer alone, with cost caps, worktree isolation, and MCP audit mode. Third independent shipped reproduction of the Ralph-loop pattern. 🟠
+- **Geoffrey Huntley's Ralph blog** — named originator of the loop pattern. Reference reading: [Huntley personal blog](https://ghuntley.com) and [ai-assisted-software-development.com](https://ai-assisted-software-development.com). 🟠
+
+### Self-improve / Memory
+
+- **[DSPy](https://github.com/stanfordnlp/dspy)** — prompts as learnable parameters. BootstrapFewShot and MIPROv2 search language space automatically. 33K stars. 🟡
+- **[CORE](https://github.com/RedPlanetHQ/core)** — temporal knowledge graph memory. Episodes → Entities → Statements with hybrid search (vector + BM25 + graph traversal). 88.24% on LoCoMo benchmark. CC plugin via SessionStart and Stop hooks. 3K stars, self-hostable. 🟠
+- **[claude-performance](https://github.com/adelaidasofia/claude-performance)** — measurement-driven CLAUDE.md. Reads session JSONLs, computes six effectiveness metrics, writes behavioural rules when a metric falls below target, retires rules when the metric stabilises. Concrete implementation of the add → measure → retire lifecycle. 🟠
+- **Homunculus plugin** (Reddit r/ClaudeAI) — observes user patterns, auto-generates skills, hooks, and commands when repetitive behaviour is detected. Probabilistic skills (50–80% fire rate), deterministic commands. Per-project state in `.claude/homunculus/`. 🟠
+
+### Multi-layer platforms
+
+- **[Claude Code](https://docs.anthropic.com/claude/docs/claude-code)** — Anthropic's terminal coding agent. Hooks-as-gates (PreToolUse / PostToolUse), skills, AGENTS.md, fork mechanics for cache reuse. 67% blind-quality win rate against Codex CLI in March 2026 benchmarks. 🟡
+- **[Codex CLI](https://github.com/openai/codex)** — OpenAI's terminal coding agent. 68K stars, MIT-licensed. `npm i -g @openai/codex`. 🟡
+- **[Cubic](https://cubic.dev)** — commercial review-loop platform. Closed-source, public benchmarks. 🟠
+
+Each project above places a different bet on which pipeline layer matters most. The layer split is the legend: a tool's category tells you what assumption it made about where AI agents actually fail. Convergence-by-pattern is real — recovery loops, hooks-as-gates, AGENTS.md adoption — but the optimal stack for a given task profile remains an empirical question per team. ⚪
 
 ---
 
@@ -129,30 +181,6 @@ This page collects sources, evidence levels, and experiment details for the [Met
 20. **Anthropic — "Building Agents with Skills."** Skills as zero-cost-until-invoked context units. Self-evaluation bias documented explicitly. Claude Code architecture: tiered context loading, compaction, coordinator mode. 🟡
     - Referenced in: [index](index.md), [context-engineering](context-engineering.md), [verification](verification.md), [principles](principles.md)
 
-21. **DSPy (Stanford, 33K stars).** Prompts as learnable parameters. BootstrapFewShot, MIPROv2 search language space automatically. 🟡
-    - Referenced in: [index](index.md), [landscape](landscape.md)
-
-22. **Pydantic (2026).** Analyzed 4,668 pull request comments, extracted 150 AGENTS.md rules. Engineering taste compiled into agent instructions. 🟡
-    - Referenced in: [specification](specification.md)
-
-23. **Promptfoo (acquired by OpenAI, March 2026, $86M).** 350K developers. Trajectory assertions: `tool-used`, `tool-args-match`, `tool-sequence`, `step-count`, `goal-success`. 🟡
-    - Referenced in: [verification](verification.md), [landscape](landscape.md)
-
-24. **spec-kit (79K stars).** GitHub's 5-command SDD workflow: constitution → specify → plan → tasks → implement. 20+ agents. 🟡
-    - Referenced in: [specification](specification.md), [landscape](landscape.md)
-
-25. **Kiro (Amazon).** IDE built around requirements → design → tasks. Specs live in project root, evolve with codebase. 🟡
-    - Referenced in: [specification](specification.md), [landscape](landscape.md)
-
-26. **AGENTS.md.** 60,000+ repositories. Linux Foundation / Agentic AI Foundation standard. Cross-tool coordination protocol with Anthropic, Google, Microsoft, Cursor backing. 🟡
-    - Referenced in: [index](index.md), [specification](specification.md), [landscape](landscape.md)
-
-27. **Augment Code.** Single-writer rule for hotspot files. Sequential merge strategy. 🟡
-    - Referenced in: [pipeline](pipeline.md)
-
-28. **OpenTelemetry GenAI SIG.** Semantic conventions: `gen_ai.chat` for LLM calls, `agent.invoke` for agent steps, `tool.execute` for tool calls. Datadog, Honeycomb, New Relic support natively. 🟡
-    - Referenced in: [verification](verification.md)
-
 29. **Simon Willison (@simonw).** Rigorous public reference on agentic engineering. Tests are free and mandatory. Agents follow existing code patterns. 🟡🟠
     - Referenced in: [context-engineering](context-engineering.md), [landscape](landscape.md)
 
@@ -191,20 +219,8 @@ This page collects sources, evidence levels, and experiment details for the [Met
 35. **Rory Teehan.** Structured error logging: what happened, why, what should have happened. 🟡
     - Referenced in: [self-improvement](self-improvement.md)
 
-35b. **adelaidasofia/claude-performance (GitHub, April 2026).** Measurement-driven CLAUDE.md: reads session JSONLs, computes six effectiveness metrics (one-shot edit rate, agent spawn distribution, model mix, hook fire rates, activity distribution, project allocation), writes behavioral rules when a metric falls below target, re-measures weekly, retires rules when metric stabilises. Rule lifecycle: add → measure → retire. 🟠
-    - Referenced in: [self-improvement](self-improvement.md), [playbook](playbook.md), [landscape](landscape.md)
-
-35c. **Homunculus plugin (Reddit r/ClaudeAI, April 2026).** Observes user patterns, auto-writes skills/hooks/commands when repetitive behavior detected. Probabilistic skills (50–80% fire rate), deterministic commands. Per-project state in `.claude/homunculus/`. 🟠
-    - Referenced in: [self-improvement](self-improvement.md), [landscape](landscape.md)
-
 35d. **u/thurn2 (Reddit r/ClaudeCode).** "Agent teams = expensive subagents with better marketing." Community consensus across multiple threads: communication overhead overwhelms team leader's context, idle notifications consume context, no proven benefit over simple subagent spawning for current implementations. 🟠
     - Referenced in: [pipeline](pipeline.md)
-
-35e. **agent-lsp (blackwell-systems, May 2026).** Go MCP server bridging Language Server Protocol to agents. 56 tools, 30 CI-verified language servers (TypeScript, Python, Go, Rust, Java, C/C++, Ruby, others). Reproducible benchmark across five real codebases (15K–319K LOC): 92–99% of grep matches on symbol references are false positives — HashiCorp Consul `Close` 1156 grep → 12 real refs (99% noise); Hono `Close` 15 → 1; FastAPI `validate` 64 → 2. Structured navigation 5–34× more token-efficient than grep-and-read, scaling with codebase size. Ships speculative execution (apply hypothetical edit in memory, get diagnostic delta, commit or discard) and phase enforcement (declared phase + structural rejection of out-of-phase tool calls = hooks-as-gates pattern shipped). Source: [blackwell-systems/agent-lsp](https://github.com/blackwell-systems/agent-lsp). Bench docs: `docs/token-savings.md`. 🟡
-    - Referenced in: [landscape](landscape.md), [verification](verification.md), [principles](principles.md)
-
-35f. **lopi (konjoai, May 2026).** Rust + tokio orchestrator for Claude Code agents. Fourth independent shipped implementation of the Ralph-loop recovery pattern after Huntley's original blog, LoopTroop, and ralph-claude-code. Run loop: Plan → Implement → Test → Score → Fix-in-place → Retry with `git reset --hard` per failed attempt, hard turn limits, diff scope check, last-error injection into next attempt's plan, model routing cheap→Opus only after failure. On terminal failure: post-mortem stage distills failure into single imperative constraint (`must` / `do not` / `always` / `never`, ≤200 chars), Jaccard-on-keywords retrieval in SQLite, no embeddings. Quality gate: `LESSON_QUALITY_GATE = 0.6` skips lesson write when score below threshold. Uses TOON format (toonformat.dev v3.0) for tabular pattern injection. Source: [konjoai/lopi](https://github.com/konjoai/lopi). 🟡
-    - Referenced in: [landscape](landscape.md), [self-improvement](self-improvement.md), [pipeline](pipeline.md), [index](index.md)
 
 ### People to Follow
 

@@ -30,6 +30,26 @@ Two preflight primitives shipped in May 2026 push this stage one step earlier th
 
 AI-generated code demands more review effort by default. Across 8.1 million pull requests, AI code required 1.7× more review revisions than human-written code. Pre-flight checks don't close that gap; they ensure reviewers spend cycles on logic and architecture, not compiler errors.
 
+## When deterministic gates go blind
+
+A deterministic gate catches defects that an oracle already tests for. If no oracle tests for a defect class, the gate sees nothing.
+
+We ran this experiment on a staged crypto-wallet refactor with nine handoff points. The acceptance gate (re-run tests, check type coverage, verify criteria) caught zero real defects across the full run. Every "catch" duplicated something the test suite had already flagged. With a strong worker, a clear spec, and a green suite, the gate was redundant.
+
+To find the blind spot, we seeded defects. Round one: four functional auth bugs. We removed the timestamp-skew window, skipped the replay check, skipped the host check, skipped the body check. The gate caught all four. But the suite already had a direct test for each, so this measured redundancy over a good test suite, not the gate's added value.
+
+Round two: four defects the suite couldn't see. An HMAC comparison that returns early and leaks timing. A byte-compare timing oracle. The master mnemonic written to a debug log. A destroy() that no longer wipes the secret from memory. The deterministic gate caught zero. Timing side-channels, secret logging, missing zeroization — none have tests because the suite doesn't assert those invariants. A green run on an untested property tells you nothing.
+
+An independent multi-agent review over the same diff caught all four. It also surfaced roughly six more genuine bugs in already-green shipped code, including a canonical hash function that throws on the BigInt amounts a production wallet actually uses.
+
+The rule: a gate on an operation pays off when three conditions hold. The operation is expensive. It's frequently avoidable via a cheaper oracle. And the gate is precise enough not to fire on unavoidable cases. The deciding variable is the avoidable fraction, not raw cost. Where a cheap oracle covers the defect, the gate is redundant. Where no oracle covers the defect class at all, the gate is blind.
+
+This shapes how you allocate verification budget. Spend gate budget where the gated operation is both expensive and often avoidable: a static check before an engine restart, a lint pass before a full build. For defect classes that have no cheap oracle (security, crypto, timing, cleanup), invest in an independent review pass instead. A more elaborate deterministic gate won't help here; the limit is oracle coverage.
+
+Precision is where a gate quietly turns negative. The same static-check-before-restart gate pays off while the restart is usually avoidable, but turns to noise during ordinary build-deploy-test work where the restart is necessary. A gate tuned for one phase misfires in another, and the fix is to scope when it fires rather than keep tuning its rules.
+
+A green suite that clears a gate is not evidence of correctness for invariants nobody tested. For those, you need a reviewer who isn't the builder.
+
 ## Separate the builder from the reviewer
 
 The reviewer needs a different session with clean context and no shared state from the builder. Not a preference — a requirement.
@@ -60,13 +80,19 @@ Reviewer effectiveness has a hard size ceiling. Production data across multiple 
 
 The implication is operational. Chunking large PRs is a prerequisite, not an optimization. If a change exceeds the threshold, partition before reviewing rather than after. Pi-reviewer's zone-partition step encodes this rule directly. The harder problem is cross-zone coupling: fixes in zone A that violate invariants enforced in zone B will pass both zone reviews independently. A separate cross-cut zone — one reviewer that reads only the diff and the shared API surface — closes that gap at modest cost without re-introducing the soup. The threshold is also domain-sensitive: a 500-line config refactor is far less context-bound than a 500-line state-machine rewrite. Treat the number as the breakpoint where the tradeoff *starts* to flip, and budget partition cost when a diff approaches that range, not after the review fails.
 
-## Four cognitive states in a stuck agent
+## How agents fail: execution and cognition
 
-The "agent is looping" intuition has been formalised. An April 2026 paper (Cognitive Companion, IBM Dublin) names four states a reasoning agent can be in: `ON_TRACK` (making progress), `LOOPING` (revisiting arguments without advancement), `DRIFTING` (relevance declining), `STUCK` (shortened responses, visible uncertainty). The last three are distinct enough that different responses apply to each. Looping needs a session reset. Drifting needs a re-read of the spec. Stuck often needs human help.
+Agent failure happens on two levels, and confusing them sends you fixing the wrong thing. The execution level is what the agent observably does wrong: the files it touches, the tools it calls, the loops it runs. The cognitive level is the internal state that produces those moves. They map onto each other. And the most dangerous failure is the one that looks like success.
 
-Two detector architectures exist. An LLM-based companion runs a short structured prompt every couple of turns (temperature 0.3, ~80 tokens) that classifies the state of the main agent. It cuts repetition by 52–62% at ~11% overhead, and it works against any model you can call over an API. A probe-based companion trains a linear classifier on hidden states at layer 28 of the reasoning model, achieves AUROC 0.84 with zero runtime overhead, and requires open-weight models (Gemma, Llama, Qwen). The probe is cheaper but unavailable through the Anthropic API; the LLM companion is what we can actually deploy today.
+Start with the execution level, because it's visible. Sourcegraph's CodeScaleBench scored 1,281 agent runs across 40-plus large repos in nine languages, and the failures cluster into five repeatable patterns. *Lost-in-codebase*: an agent reads a file, follows its imports, and the branching explodes until it's drowning. *Wrong-file or wrong-symbol*: lexical search surfaces a name match but can't rank by structural role, so the agent edits the decoy. *Tool thrashing*: one run burned 96 tool calls over 84 minutes with six reversals, where structured search did the identical job in 5 calls and 4.4 minutes. *Context overflow*: handing the agent more tools made things worse, not better, because it had no strategy for choosing among them. And *partial completion*: modifying 2 of 7 required files and still passing tests that only cover what changed, scoring 0.32 against the 0.80 of a full edit. Each pattern points to an infrastructure fix rather than a model swap.
 
-The existing production baselines are rule-based and miss the semantic cases. LangGraph's `recursion_limit` is a counter. AutoGen composes termination on message count, token budget, and pattern match. OpenHands' `StuckDetector` implements five heuristics. All catch the mechanical loops. None catch drift, where the agent is making progress in a direction that's no longer the right direction. A model-based detector catches both, which is why the LLM-companion pattern is the one worth pulling into production pipelines next.
+The cognitive level explains why those patterns recur. The Cognitive Companion work from IBM Dublin names four reasoning states. On-track means real progress. Looping means revisiting the same arguments without advancing. Drifting means relevance is steadily declining. Stuck shows up as shortened responses and visible uncertainty. On small 1.5B-parameter models, roughly 30% of hard reasoning tasks slid into one of the degraded states. The right response depends on which one: looping wants a session reset, drifting wants a re-read of the spec, stuck usually needs a human.
+
+The two levels are the same failure seen from outside and inside. Tool thrashing is looping made visible. Lost-in-codebase is drifting made visible. The mapping matters because the cognitive state is hard to observe directly, while the execution trajectory sits right there in the log. You catch the inner failure by watching the outer one.
+
+Detecting it has settled into two architectures. A companion model runs a short structured prompt every couple of turns (about 80 tokens at temperature 0.3) to classify the main agent's state; it cuts repetition 52 to 62% at roughly 11% overhead and works against any closed API. A probe-based companion instead trains a linear classifier on the agent's layer-28 hidden states, reaching 0.84 AUROC with zero runtime cost. But it needs open weights, so a closed API rules it out. Production guards stop short of both. LangGraph's recursion_limit counter, AutoGen's termination conditions, and OpenHands' StuckDetector with its five heuristics all catch mechanical loops while missing semantic drift, which is steady progress in a direction that stopped being right several steps ago.
+
+The failure to fear is partial completion, because it wears the mask of success. It survives a casual glance. It can survive a green build. Only a coverage check against the full spec catches the three files that never got touched. That's the argument for trajectory-level signals (which files were modified, the read-to-edit ratio, retry counts), since they turn an invisible failure into a measurable one. The continuous-evaluation section shows how to wire those same signals into live gates.
 
 ## Adversarial probes over courtesy checks
 

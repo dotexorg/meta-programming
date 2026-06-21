@@ -4,6 +4,7 @@ One file per sync round. Newest first. Each entry is dated and named by the main
 
 | Date | What landed |
 |------|-------------|
+| [2026-06-21](./changelog/2026-06-21-acceptance-gate-oracle-coverage-failure-taxonomy-cognitive-companion.md) | Verification: acceptance-gate bounded by oracle coverage (Exp 10 regime-conditional gate), two-level failure taxonomy (Sourcegraph 5 × Cognitive Companion 4); P#4 separate-review now industry default (Cursor/Devin); index + landscape lean into industry-standard convergence |
 | [2026-05-09](./changelog/2026-05-09-agent-lsp-lopi-ralph-loop-hooks-as-gates-crystallized.md) | agent-lsp ships speculative execution + phase enforcement (closes hooks-as-gates), lopi = 4th Ralph-loop sighting (recovery layer crystallized), single-imperative lesson form + quality gate |
 | [2026-04-25](./changelog/2026-04-25-verification-multi-model-cursor-cubic-cloudflare-mythos.md) | Verification: Cursor BugBot / cubic.dev / Cloudflare multi-model case studies, Mozilla × Anthropic Mythos data, ~500 LOC partition threshold, bounded review iterations |
 | [2026-04-17](./changelog/2026-04-17-layer2-intent-form-opus47-repricing-spec-slump-papers.md) | Layer 2 reformulation (Intent Form Selection), Opus 4.7 silent repricing, four academic papers landed (Spec Gap / Context Engineering / SLUMP / Cognitive Companion) |

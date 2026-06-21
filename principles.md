@@ -48,6 +48,8 @@ Anthropic documents "self-evaluation bias" explicitly. In a 133-cycle study acro
 
 The scale of the consequence: Amazon deployed 21K agents with 80% team adoption in 90 days, then hit 4 Sev-1 incidents in the following 90 days, including a 6-hour outage. Velocity scaled faster than verification. Verification isn't optional overhead. It's what keeps this from happening.
 
+This has stopped being advice and become default infrastructure. Cursor ships automatic review for new users; Devin runs a security review on every pull request, finding the vulnerabilities scanners miss and drafting the fix. Separate review moved from a practice teams opt into to something the tools now ship by default. The reason it generalises is the same one a deterministic gate can't cover: a reviewer with fresh context is the only thing that catches the defect classes no test asserts.
+
 See [Verification](./verification.md).
 
 ### 5. Atomic tasks with context reset
