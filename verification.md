@@ -48,6 +48,8 @@ This shapes how you allocate verification budget. Spend gate budget where the ga
 
 Precision is where a gate quietly turns negative. The same static-check-before-restart gate pays off while the restart is usually avoidable, but turns to noise during ordinary build-deploy-test work where the restart is necessary. A gate tuned for one phase misfires in another, and the fix is to scope when it fires rather than keep tuning its rules.
 
+There is a second blind spot, and it sits on the reviewer's side. Point a fixing agent at an agent-generated review and by default it starts "fixing" findings that were never real, editing correct code until it breaks. The same discipline that guards the builder guards the reviewer: read the artifact before you act on the claim. In one fix pass over a 94-finding report, two of the three things the gate caught were false findings refuted by reading the code, not defects in the fix. An agent that skips that step ships regressions into code that was already correct. The reviewer still has to be independent and run in clean context, but the gate is what stops the fix loop from manufacturing its own bugs.
+
 A green suite that clears a gate is not evidence of correctness for invariants nobody tested. For those, you need a reviewer who isn't the builder.
 
 ## Separate the builder from the reviewer
