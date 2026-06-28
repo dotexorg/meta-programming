@@ -59,7 +59,6 @@ The big shifts this round: Layer 2 got rewritten, Opus 4.7 shipped with a silent
 ### [context-engineering.md](../context-engineering.md)
 
 - **New section: "The AGENTS.md cliff."** Paper (arxiv 2602.11988) quantifies context file cliff: success drops past 500 lines. Sweet spot 200–300 actionable lines. ~70% adherence even under budget. Hooks for rules that must hold every time, context files are advisory.
-- KB size updated: 429 → 1,000+ bullets, synthesis 8KB → 12KB.
 
 ### [principles.md](../principles.md)
 

@@ -136,6 +136,16 @@ On benchmarks: SWE-bench Verified 2026 has Verdent at 76.1%, Cursor/Codeium arou
 
 **Armin Ronacher** (@mitsuhiko). Advocate for `lat.md` as knowledge-graph-in-markdown. Shipped multi-edit tooling for Pi. Direct critic of agent anti-patterns: "agents are hard to resist, build shit you regret." Builds the tools and documents the failure modes in the same feed.
 
+## June 2026: what moved since
+
+Three shifts sharpen the April picture rather than replace it.
+
+Separate review went from best practice to shipped default. Cursor turned on automatic review for new users, and Devin added a security pass to every pull request, finding the vulnerabilities scanners miss and drafting the fix. What the verification chapter argued for now ships by default. The reason it stuck: an independent reviewer is the only thing that catches the defect classes no test asserts, the gap a deterministic gate structurally can't close.
+
+Eval infrastructure is consolidating. harbor became the de-facto harness for stateful, long-running agent evaluations. It underpins Terminal-Bench 2 and now hosts LangSmith, Daytona, E2B, and Modal sandboxes behind one interface. Reproducing an agent benchmark increasingly means running it on harbor.
+
+"Evidence-gated" hardened into a product category. Tools now ship completion gates that demand proof rather than prose: a fenced report parsed and rejected if malformed, real status checks against the working tree, runtime commands gated by exit code, and an independent-review rung that can't be self-attested. open-multi-agent-kit routes tasks into scoped task-graph lanes with replayable artifacts; agent-completion-gate and claude-prove-done enforce the same shape. The acceptance-ladder idea (reliability as a graded dial from attestation up to independent review) keeps getting rebuilt by people who never coordinated. The academic side pushed in parallel: a "machine studying" line of work reframes continual learning as expertise gained from study compute, with a benchmark for how much an agent improves by reading documentation at test time.
+
 ## Open questions
 
 **When does observability become overhead?** OTel GenAI SIG is maturing. Schemas still evolving. At what complexity does full tracing pay off versus `console.log`? No data. We haven't run the comparison.

@@ -52,7 +52,9 @@ The practical consequence: **natural language is code.** A spec with a `DO NOT` 
 
 This convergence is measurable at scale. A Bamberg/Heidelberg systematic analysis of 2,926 repositories across Claude Code, GitHub Copilot, Cursor, Gemini, and Codex found independent convergence on the same pattern: linguistic configuration files (CLAUDE.md, AGENTS.md, COPILOT-INSTRUCTIONS.md) as the primary mechanism for shaping agent behavior. Pydantic took it furthest: they extracted 4,668 PR review comments and distilled them into roughly 150 AGENTS.md rules. Implicit engineering judgment, compiled into explicit agent instructions.
 
-AGENTS.md now has 60,000+ repositories and Linux Foundation endorsement. Microsoft Research RiSE named "Intent Formalization" a grand challenge for 2026. AWS launched Kiro. A code review agent in production self-improves from pull request activity in real time, closing the loop that Layer 3 describes. The industry is converging on language as the primary engineering artifact. It hasn't named what it's converging on.
+AGENTS.md now spans 60,000+ repositories under Linux Foundation governance. Microsoft Research RiSE named "Intent Formalization" a grand challenge for 2026. AWS launched Kiro. A code review agent in production self-improves from pull request activity in real time, closing the loop that Layer 3 describes.
+
+The convergence has moved past configuration files into the rest of the stack. Independent review crossed from best practice to default: Cursor auto-reviews for new users, and Devin runs a security pass on every pull request. Completion gates that demand proof rather than prose hardened into a product category, and graded reliability ladders (attestation up to independent review) are being rebuilt by teams that never coordinated. What started as a trend is becoming the default way agent systems get built. The industry is converging on language as the primary engineering artifact; it just hasn't agreed on a name.
 
 ## Three Layers
 
