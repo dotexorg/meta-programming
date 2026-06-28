@@ -43,12 +43,3 @@ Six pages touched: index, landscape, principles, pipeline, verification, self-im
 - **35e. agent-lsp** (blackwell-systems, May 2026) — full entry with bench numbers and source links.
 - **35f. lopi** (konjoai, May 2026) — full entry with architecture detail, Ralph-loop n=4 sighting, TOON format reference.
 
----
-
-## What didn't land this round
-
-- **Hooks-as-gates row in the CC architecture table** moved in tier1 from `gap` to `closed by agent-lsp internal/phase/ (n=1 external, watch for 2nd)`. Surfaces in verification.md as the named primitive but the architecture table itself is tier1-internal, no reader-facing page exposes it directly.
-- **Industry convergence consolidated one-liner** stays in tier1 plus tier1's three-layer LMP thesis page. The four new entries (Mitsuhiko 1/1730, Agentic World Modeling 40-author survey, agent-lsp speculative-execution, lopi recovery layer) surface scattered across landscape.md sections; a unified industry-convergence narrative belongs in a public LMP-thesis page that doesn't currently exist.
-- **TOON format** (toonformat.dev v3.0, claimed ~40% fewer tokens than JSON, used by lopi for tabular pattern injection) stays in synthesis as a spawn thread, not promoted.
-- **Simon Willison agent-incident anti-patterns** (Apr 27) and **AgenticQwen-30B** (Apr) remain in synthesis pending a second independent cite.
-- **landscape.md and self-improvement.md word-count overflow** (3099 and 3071 words against the 1500–2000 style-guide target) is sync-debt-2 — content is correct, length needs a separate trim pass that wasn't in this round's scope.
