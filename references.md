@@ -1,6 +1,6 @@
 # References
 
-This page collects tools, sources, and experiment details behind the [Meta-Programming](index.md) documentation. Tools come first — runnable artifacts worth installing, forking, or reading — then sources backing the claims in narrative pages, then our own experiments.
+This page collects tools, sources, and experiment details behind the [Meta-Programming](index.md) documentation. Tools come first: runnable artifacts worth installing, forking, or reading. Then sources backing the claims in narrative pages, then our own experiments.
 
 ## Evidence Levels
 
