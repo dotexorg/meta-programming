@@ -1,6 +1,8 @@
-# What Changed: June 21, 2026
+# What Changed: June 21–22, 2026
 
-Five reader-facing pages touched: index, verification, principles, landscape, references. The verification chapter gains its sharpest new result of the quarter — a deterministic acceptance-gate is bounded by oracle coverage, so it's redundant where tests cover the defect and blind where they don't, which is the structural case for independent review. The "stuck agent" section widens into a two-level failure taxonomy (execution × cognition). Separate review crosses from best practice to shipped default across two vendors. The same acceptance-gate result then got validated live on a production wallet refactor across two task shapes it wasn't built for — a recovery fix-pass and a final conformance audit — and grew two new ideas out of those runs: the gate guards the reviewer's claims (not just the builder's), and there are three concrete signals that tell a trustworthy review PASS from a rubber stamp. Internally, the open-questions detail split out of tier1 to bring it back under cap, and the doc pipeline gained a validated dual-model writing step.
+This round was about verification, and one result leads it: a deterministic acceptance-gate only earns its keep where your tests already cover the defect. Everywhere they don't — security, crypto, timing, cleanup — the gate runs green and sees nothing, and a fresh-context reviewer is the only thing that catches the bug. That result then survived production. It held on a live wallet refactor across two task shapes it was never built for, and threw off two new findings on the way: the gate guards the reviewer's claims too, not just the builder's, and three concrete signals separate a real PASS from a rubber stamp.
+
+Five reader-facing pages moved: index, verification, principles, landscape, references. The "stuck agent" section grew into a two-level failure taxonomy, execution and cognition. Separate builder/reviewer crossed from best practice to shipped default across two vendors. Two changes stayed internal: tier1 went back under its size cap, and the doc pipeline picked up a validated two-model writing step.
 
 ---
 

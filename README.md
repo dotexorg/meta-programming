@@ -16,8 +16,8 @@ How coding agents improve through language (specs, reviews, lessons, rules) with
 | [self-improvement](self-improvement.md)       | Memory hierarchy, lesson extraction, closed loop                     |
 | [principles](principles.md)                   | 6 principles, 3 maturity levels, anti-patterns                       |
 | [playbook](playbook.md)                       | 15 rules tied to principles and experiments                          |
-| [landscape](landscape.md)                     | Tools, trends, papers — April 2026 snapshot                          |
-| [references](references.md)                   | Full bibliography — papers, repos, people, our experiments           |
+| [landscape](landscape.md)                     | Tools, trends, papers: April 2026 snapshot                          |
+| [references](references.md)                   | Full bibliography: papers, repos, people, our experiments           |
 | [changelog](changelog.md)                     | What's new since previous sync                                       |
 
 ## Evidence levels
