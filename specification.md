@@ -48,7 +48,7 @@ The spectrum runs from informal to formal:
 
 **DSL synthesis**: a domain-specific language from which correct code is mechanically generated. Currently academic outside narrow domains. The trajectory is clear; the tooling isn't there yet.
 
-One result worth sitting with: auto-generated context reduced task success by 3%, while human-written boundaries improved it by 4%. LLMs writing their own constraints produces agents that do a lot of plausible-looking work in the wrong direction. Specs have to come from people who understand intent.
+One result worth sitting with: auto-generated context produced no significant change in task success while adding roughly 20% cost, and human-written boundaries showed only a small, non-significant gain. LLMs writing their own constraints produce agents that do a lot of plausible-looking work in the wrong direction. Specs have to come from people who understand intent.
 
 Interactive test-driven formalization offers a practical middle path: the agent generates postconditions from natural language, the developer validates before any code runs. "Remove duplicates" has at least two distinct valid interpretations. The postcondition forces a commit to one of them upfront.
 

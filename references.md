@@ -90,10 +90,10 @@ Each project above places a different bet on which pipeline layer matters most. 
 1. **LinearB (2026).** "The Real Impact of AI on Developer Productivity." 8.1M pull requests, 4,800 teams, 42 countries. AI-generated code: 1.7× more review revisions, 4.6× longer review wait, 32.7% acceptance rate (vs 84.4% human). Developers feel 20% faster; tasks take 19% longer end-to-end. 🟡
    - Referenced in: [index](index.md), [verification](verification.md), [principles](principles.md)
 
-2. **Meta-Harness (Lee, Nair, Zhang, Lee, Khattab, Finn — Stanford + MIT, arxiv 2603.28052, March 2026).** End-to-end optimization of model harnesses. 6× performance gap on the same benchmark from harness changes alone. Meta-Harness agentic proposer searches harness code via filesystem: +7.7 points on online text classification with 4× fewer context tokens, +4.7 points on retrieval-augmented math (200 IMO-level), 76.4% on TerminalBench-2 (top auto-optimized system). 🟡
+2. **Meta-Harness (Lee, Nair, Zhang, Lee, Khattab, Finn — Stanford + MIT, arxiv 2603.28052, March 2026).** End-to-end optimization of model harnesses. Agentic proposer searches harness code via filesystem: +7.7 points on online text classification with 4× fewer context tokens, +4.7 points on retrieval-augmented math (200 IMO-level), 76.4% on TerminalBench-2 (top auto-optimized system, vs a Claude Code baseline of 58.0). Correction: the widely-quoted "6× gap" is a figure the paper cites from SWE-bench Mobile, not a Meta-Harness measurement — do not attribute it to this study. 🟡
    - Referenced in: [index](index.md), [principles](principles.md)
 
-3. **ETH Zurich (Feb 2026).** 138 real-world tasks across 3 models. Auto-generated context files reduced task success by 3%. Human-written boundaries improved success by 4%. 🟡
+3. **ETH Zurich / LogicStar (arxiv 2602.11988, Feb 2026), read firsthand.** 138 real-world tasks (CTXBENCH) across 3 models. Auto-generated context files: no significant success change (p=.87/.37) with +20–23% cost. Human-written boundaries: +2.4%, not statistically significant. Correction: earlier editions cited "−3% / +4%" — neither figure holds. Same paper as 17h below (dedup pending). 🟡
    - Referenced in: [specification](specification.md), [pipeline](pipeline.md), [principles](principles.md)
 
 4. **Sonar (2026).** Survey of 1,000+ developers. Only 48% verify AI output before shipping. 🟡
@@ -161,7 +161,7 @@ Each project above places a different bet on which pipeline layer matters most. 
 17g. **Cognitive Companion (Khan & Khan, IBM Dublin, arxiv 2604.13759, April 2026).** Four cognitive states: ON_TRACK, LOOPING, DRIFTING, STUCK. Two detector architectures: LLM-based companion (periodic structured prompt, −52–62% repetition, 11% overhead, API-accessible) and probe-based (linear classifier on hidden states layer 28, AUROC 0.84, requires open weights). 🟡
     - Referenced in: [verification](verification.md), [self-improvement](self-improvement.md)
 
-17h. **AGENTS.md paper (arxiv 2602.11988).** Context files actively reduce SWE-bench success rates past 500 lines. Cliff drop, not gradual. Sweet spot: 200–300 actionable lines. "Not giving the model a mental model, giving it a compliance checklist." 🟡
+17h. **AGENTS.md paper — ETH/LogicStar (arxiv 2602.11988), read firsthand 2026-07-12.** On CTXBENCH (138 issues / 12 repos) plus SWE-bench: LLM-generated context files show no significant success change (p=.87/.37) while adding +20–23% cost; §B finds file length has no effect on outcomes. Correction: earlier editions of this reference cited a "500-line cliff / 200–300 sweet spot / compliance-checklist quote" from this id — the paper contains none of them. 🟡
     - Referenced in: [specification](specification.md), [context-engineering](context-engineering.md), [landscape](landscape.md)
 
 17i. **Expectation-Realisation Gap (Lobentanzer et al., arxiv 2602.20292, February 2026).** Extension of METR study. 16 developers expected +24% productivity from AI tools, measured −19%. 43-point calibration error. 🟡

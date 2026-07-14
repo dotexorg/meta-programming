@@ -30,7 +30,7 @@ How you structure an agent's memory, specs, and feedback loops matters more than
 
 The data landed before the theory. LinearB studied 8.1 million pull requests. The headline: AI-generated code ships faster but breaks more. More issues, longer review queues, lower acceptance rates. Developers _feel_ 20% faster; tasks actually take 19% longer end-to-end. Creation accelerated. Verification didn't.
 
-The natural response is to wait for a better model. Stanford's 2026 Meta-Harness study suggests that's the wrong fix. They took the same model, changed only the scaffolding around it, and measured a **6× performance gap** on the same benchmark. The model didn't change. The process around it did, and that was the difference between failing and passing.
+The natural response is to wait for a better model. Stanford's 2026 Meta-Harness study suggests that's the wrong fix. They took the same model and changed only the scaffolding around it: automated harness search lifted it from **58% to 76%** on TerminalBench-2, the same benchmark, with no weight change. The model didn't move. The process around it did, and that was the difference between failing and passing.
 
 This is the evolutionary pressure. It runs in three stages.
 
@@ -74,7 +74,7 @@ Layer 1 explains why all production agent systems converge on human-readable mar
 
 There's no single canonical form for expressing intent to an agent. There's a set of them, each with its own strengths: natural language for throwaway exploration, `AGENTS.md` for cross-session conventions, `SKILL.md` for reusable procedures, `DO/DO NOT/GLOSSARY` for boundary-sensitive tasks, hooks for non-negotiable gates. Layer 2 is the practice of picking the right form for the task, not inventing a new language.
 
-The choice tracks three dimensions. Complexity: a one-line fix runs fine on natural language; a multi-file refactor doesn't. Reliability requirement: a failing test before a release blocker belongs in a hook, not in a convention document agents follow 70% of the time. Horizon: a one-off exploration doesn't need a spec; a project contract does. Getting this wrong in either direction costs: under-specified tasks fail the way Experiment 2 did (wandering scope, wrong intent); over-specified tasks hit the AGENTS.md cliff (context files past 500 lines measurably reduce success rates).
+The choice tracks three dimensions. Complexity: a one-line fix runs fine on natural language; a multi-file refactor doesn't. Reliability requirement: a failing test before a release blocker belongs in a hook, not in a convention document agents follow 70% of the time. Horizon: a one-off exploration doesn't need a spec; a project contract does. Getting this wrong in either direction costs: under-specified tasks fail the way Experiment 2 did (wandering scope, wrong intent); over-specified ones bury the model in rules it follows only about 70% of the time and pay a cost premium for context that adds no measured benefit.
 
 The constraint language (`DO NOT`, `GLOSSARY`, explicit acceptance criteria) is the form that most consistently moves outcomes. A 2026 controlled experiment quantified it: spec detail dropped task pass rates from 89% to 56% in single-agent setups and from 58% to 25% in multi-agent. A full spec alone at the merge point recovered the 89% ceiling. An AST-based conflict detector added zero. Specs do the heavy lifting; reconciliation infrastructure does not.
 
@@ -88,7 +88,7 @@ The form-selection space now has reference implementations at both ends. At the 
 
 The system observes what worked, extracts lessons, refines the model, improves the language. No weight updates.
 
-Stanford's Meta-Harness study proved this at the harness level: automated optimization searching configurations the same way gradient descent searches weights. The 6× performance gap between manual and optimized harnesses shows the scale of what's available in the language space, without any model change.
+Stanford's Meta-Harness study proved this at the harness level: automated optimization searching configurations the same way gradient descent searches weights. Their search lifted the same model to 76.4% on TerminalBench-2, with double-digit gains on two other benchmarks using 4× fewer context tokens. That is the scale of what's available in the language space, without any model change.
 
 A separate end-to-end pipeline run validated the approach concretely. Twenty-four files, 253 tests, zero regressions, $5.50 in API cost. Structured process (Scout → Spec → Plan → Worker → Reviewer → Lessons) beat raw context injection on cost, quality, and first-attempt pass rate. The Lessons stage is what makes the next run cheaper: the reviewer extracts structured findings, and those findings feed forward.
 

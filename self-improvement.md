@@ -100,7 +100,7 @@ Harrison Chase (LangChain) published a framework in April 2026 that sits orthogo
 
 **Model** (weights). Changes here are durable and expensive. Catastrophic forgetting, label cost, multi-week cycles. Most of the industry's "continual learning" research lives here.
 
-**Harness** (code plus always-present instructions). Claude Code, Pi, any orchestration layer an agent is embedded in. Changes here affect every session under that harness without touching a weight. Stanford's Meta-Harness paper measured a 6× performance gap on the same underlying model by changing only the scaffolding.
+**Harness** (code plus always-present instructions). Claude Code, Pi, any orchestration layer an agent is embedded in. Changes here affect every session under that harness without touching a weight. Stanford's Meta-Harness paper lifted the same underlying model from 58% to 76% on TerminalBench-2 by changing only the scaffolding.
 
 **Context** (CLAUDE.md, skills, mcp.json, session memory). Changes here are per-project or per-session, cheapest, most specific. This is where 90% of practitioner self-improvement actually happens, and where our own KB / rule-retirement loops live.
 
