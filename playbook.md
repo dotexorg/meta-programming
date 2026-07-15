@@ -10,7 +10,7 @@ Examples use Claude Code, but most rules apply to any coding agent: Cursor, Code
 
 ### 1. Keep CLAUDE.md under 200 lines
 
-The model can follow roughly 200 rules at a time. The system prompt already consumes about 50, which leaves you around 150. A 500-line CLAUDE.md doesn't make the agent smarter. It makes it selectively deaf. Research across multiple agents and LLMs confirms that context files over 500 lines actively reduce success rates: it's a cliff drop, not gradual.
+The model can follow roughly 200 rules at a time. The system prompt already consumes about 50, which leaves you around 150. A 500-line CLAUDE.md doesn't make the agent smarter. It makes it selectively deaf: past the rule budget, extra lines get skipped, not absorbed. (The AGENTS.md study sometimes cited here for a "500-line cliff" actually found no length effect at all; the real limits are the rule budget and the ~70% adherence rate below.)
 
 And even under the budget, adherence isn't 100%. Context file instructions are followed roughly **70% of the time**. For rules that must hold in every session ("never push to main", "always run tests before commit"), don't rely on the file. Use hooks (see Rule 15). The file is advisory; hooks are deterministic.
 

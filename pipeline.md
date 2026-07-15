@@ -18,7 +18,7 @@ We ran five variants on the same production EventBus refactor (509 TypeScript fi
 
 The pipeline run (#4) was the cheapest correct solution and the only one that passed review on the first attempt. Adding a code map to that same pipeline (#5) cost 51% more and introduced a review failure. The map gave the agent a fast path to the highest-ranked files, which meant it stopped exploring and missed scope. Without the map, it grepped broadly, found the full picture, and built accordingly. [See Experiments](./experiments.md#experiment-1-process-vs-context).
 
-Auto-generated context reduces success by 3% and increases cost by 20%; human-written boundaries improve success by 4%, across 138 real-world tasks and three models. Same mechanism at a different scale: pre-loaded navigation shortcuts substitute for actual exploration.
+Auto-generated context produces no significant change in success while increasing cost by about 20%, across 138 real-world tasks and three models; human-written boundaries showed only a small, non-significant gain. Same mechanism at a different scale: pre-loaded navigation shortcuts substitute for actual exploration.
 
 The pipeline adds roughly 10× the latency of a raw prompt for simple changes. But trace a full week of work: two raw failures per feature, one pipeline success. The pipeline reaches working code faster. The overhead isn't in the pipeline. It's in the failures it prevents.
 
