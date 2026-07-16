@@ -52,6 +52,24 @@ There is a second blind spot, and it sits on the reviewer's side. Point a fixing
 
 A green suite that clears a gate is not evidence of correctness for invariants nobody tested. For those, you need a reviewer who isn't the builder.
 
+### Beyond oracle coverage: scope and environment
+
+The seeded-defect experiment isolated one axis of blindness: oracle cost, the defect class with no test to assert it. But a production build across 18 tasks revealed two more axes where a per-task gate fails structurally.
+
+The pipeline ran a financial-auth integration from scratch via a tech-lead build: three stages, 18 tasks. A characterization oracle written before the first agent ran held bit-for-bit through every stage, from 89 passing tests at the start to 182 at the end, zero regressions. First-try-pass was NO at every stage. Independent review caught four critical defects; the per-task gate caught none — not because the oracle was expensive, but because each task's own tests genuinely passed. The oracle covered exactly what it was built to cover. The four criticals lived outside it. 🟢
+
+Those four fall into three classes, and together they show what "blind" actually means for a gate that checks each task in isolation:
+
+**Fetched-not-enforced.** The login flow fetched a `device_revoked` flag from the backend but never checked it. A revoked device logged in, refreshed tokens, and stayed authenticated indefinitely. The task passed its own tests because nothing asserted the flag's enforcement; that was somebody else's job.
+
+**Cross-task interaction.** A cleanup job soft-deleted abandoned accounts on a schedule. Correct in isolation. But on one specific path — create account, log out, log back in within the cleanup window — two separately-correct features collided and corrupted state. Every task passed its own tests; only whole-changeset review sees where two green tasks intersect.
+
+**Environment-dependent.** A DB migration ran once in local dev and was then orphaned from the journal. Green locally because it had already run. Dead on a fresh CI or staging environment that rebuilds from the journal and skips it.
+
+The lesson is operational: *each task passing its own tests* is not evidence of correctness. The bugs that ship live in the gaps between tasks and in the fresh environment neither task assumed. The guard is whole-changeset review plus a fresh-environment run — not a fancier per-task gate.
+
+There is a second value mode for the gate when the expensive operation genuinely cannot be oracled away, when you can't cheaply test it out of existence. A static-check-before-restart gate still pays by forcing a pre-flight block: instrument every live hypothesis into one build, with loud false-branches and a stack trace at the emit point, before spending the restart. One restart that tests five hypotheses beats five one-guess restarts. In one debugging session, a single instrumented restart named a root cause that had survived two prior sessions, each of which had tested only one guess. The reframe: gate value = max(restarts prevented, hypotheses per restart) — the seeded experiment measured the first term, this one the second. The template "every hypothesis and its toggle in this one build" turns a one-guess restart into a decisive experiment.
+
 ## Separate the builder from the reviewer
 
 The reviewer needs a different session with clean context and no shared state from the builder. Not a preference — a requirement.
